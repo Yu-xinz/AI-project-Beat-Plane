@@ -1,0 +1,17 @@
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/ProvidedFramework.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/PartForYou.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/part1.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/part2.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/part3.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/part4.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/Dawnbreaker.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/INSTALL.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/SOIL/CMakeFiles/SOIL.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/SOIL/CMakeFiles/INSTALL.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/SOIL/CMakeFiles/ALL_BUILD.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/freeglut/CMakeFiles/freeglut.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/freeglut/CMakeFiles/freeglut_static.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/freeglut/CMakeFiles/INSTALL.dir
+C:/Users/Yuxinz/Desktop/CS100-HW89/build/freeglut/CMakeFiles/ALL_BUILD.dir

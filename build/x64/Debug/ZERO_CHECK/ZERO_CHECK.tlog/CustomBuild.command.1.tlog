@@ -1,0 +1,10 @@
+^C:\USERS\YUXINZ\DESKTOP\CS100-HW89\BUILD\CMAKEFILES\EC6741D630E02852909E6A2FC7F79666\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/Yuxinz/Desktop/CS100-HW89 -BC:/Users/Yuxinz/Desktop/CS100-HW89/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/Yuxinz/Desktop/CS100-HW89/build/Dawnbreaker.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
