@@ -1,5 +1,6 @@
 #include "GameObjects.h"
 #include <cmath>
+#include <queue>
 
 GameObject::GameObject(int imageID, int x, int y, int direction, int layer, double size, GameWorld* wrd):ObjectBase(imageID,x,y,direction,layer,size){
     world=wrd;
@@ -9,6 +10,15 @@ bool GameObject::jud_life(){return life;}
 int GameObject::gettype(){return type;}
 void GameObject::settype(int ty){type=ty;}
 GameWorld* GameObject::get_world(){return world;}
+GameWorld* GameObject::getnextworld(GameWorld *world,int type,int x_move,int y_move){
+    for(auto i:world->get_ob()){
+        if((i)->gettype()==type){
+            (i)->set_move(x_move,y_move);
+            (i)->Update();
+        }
+    }
+    return world;
+}
 bool GameObject::track(int x1,int x2,int y1,int y2,double s1,double s2) {
     double d=sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
     if(d<30.0*(s1+s2))
@@ -16,6 +26,51 @@ bool GameObject::track(int x1,int x2,int y1,int y2,double s1,double s2) {
     else
         return false;
 }
+double GameObject::evaluatefunction(){
+    int min_x_alpha=114514;
+    int min_x_bullet=114514;
+    int cnt_bullet=0;
+    int cnt_alpha=0;
+    int x_distance;
+    int hp;
+    int dawnposx;
+    for(auto i:get_world()->get_ob()){
+        if((i)->gettype()==1){
+            hp=(i)->get_hp();
+            dawnposx=(i)->GetX();
+        }
+    }
+    double result=(double)get_world()->GetScore();
+    for(auto i:get_world()->get_ob()){
+        if(((i)->gettype()==4) && (i)->jud_life()){
+            cnt_alpha++;
+            x_distance=(i)->GetX()-dawnposx;
+            if(x_distance <= 0)
+                x_distance=(-1)*x_distance;
+            if(x_distance <= min_x_alpha)
+                min_x_alpha=x_distance;
+        }
+        if(((i)->gettype()==7) && (i)->jud_life()){
+            cnt_bullet++;
+            x_distance=(i)->GetX()-dawnposx;
+            if(x_distance <= 0)
+                x_distance=(-1)*x_distance;
+            if(x_distance <= min_x_bullet)
+                min_x_bullet=x_distance;
+        }
+    }
+    if(min_x_alpha>0 && min_x_bullet>0 && hp>0){
+        result+=-400/min_x_bullet+100/min_x_alpha;
+    }
+    else if(cnt_bullet==0 && cnt_alpha>0 && min_x_alpha>0){
+        result+=100/min_x_alpha;
+    }
+    else if(cnt_alpha==0 && cnt_bullet>0 && min_x_bullet>0){
+        result+=-100/min_x_bullet;
+    }
+    return result;
+}
+
 
 //Dawnbreaker
 Dawnbreaker::Dawnbreaker(GameWorld* wrd):GameObject(IMGID_DAWNBREAKER,300,100,0,0,1.0,wrd){
@@ -25,7 +80,9 @@ Dawnbreaker::Dawnbreaker(GameWorld* wrd):GameObject(IMGID_DAWNBREAKER,300,100,0,
     level=0;
     set_life(true);
     settype(1);
+    depth=10;
 }
+
 void Dawnbreaker::Update(){
     if((GetX()+x_move*4)>=0&&(GetX()+x_move*4)<=(WINDOW_WIDTH-1))
         MoveTo(GetX()+x_move*4,GetY());
@@ -57,7 +114,282 @@ int Dawnbreaker::get_meteor(){return num_met;}
 void Dawnbreaker::add_meteor(){num_met++;}
 int Dawnbreaker::get_hp(){return hp;}
 void Dawnbreaker::set_hp(int dg){hp-=dg;}
-
+void Dawnbreaker::dodgebullet(){
+    int min_x_distance=114514;
+    int min_y_distance=114514;
+    int x_distance,y_distance;
+    int dawnposx=GetX();
+    int dawnposy=GetY();
+    int rl=2; //right or left turn_right=0 turn_left=1
+    int ud=2; //up or down turn_up=0 turn_down=1
+    for(auto i:get_world()->get_ob()){
+        if(((i)->gettype()==7) && (i)->jud_life()){
+        //if(((i)->gettype()==7 || (i)->gettype()==4) && (i)->jud_life()){
+            x_distance=(i)->GetX()-dawnposx;
+            y_distance=(i)->GetY()-dawnposy;
+            if(x_distance <= 0)
+                x_distance=(-1)*x_distance;
+            if(y_distance <= 0)
+                y_distance=(-1)*y_distance;
+            if(x_distance <= min_x_distance){
+                min_x_distance=x_distance;
+                if((i)->GetX()-dawnposx >= 100 || (i)->GetX()-dawnposx <= -100){
+                    rl=2; //dawnbreaker will stay still
+                }
+                else if((i)->GetX()-dawnposx >=0 && (i)->GetX()-dawnposx <= 100){
+                    rl=true; //dawnbreaker will turn left
+                }
+                else{
+                    rl=false; //turn right
+                }
+            }
+            if(y_distance <= min_y_distance){
+                min_y_distance=y_distance;
+                if((i)->GetY()-dawnposy >= 100 || (i)->GetY()-dawnposy <= -100){
+                    ud=2; //dawnbreaker will stay still
+                }
+                else if((i)->GetY()-dawnposy >=0 && (i)->GetY()-dawnposy <= 100){
+                    ud=true; //dawnbreaker will turn left
+                }
+                else{
+                    ud=false; //turn right
+                }
+            }
+        }
+    }
+    if(rl==2 && ud==2){
+        x_move=0;
+        y_move=0;
+    }
+    if(rl==true){ //dawnbreaker will turn left
+        x_move=-1;
+        if(dawnposx-4<0)
+            x_move=1;
+    }
+    if(rl==false){ //turn right
+        x_move=1;
+        if(dawnposx+4>(WINDOW_WIDTH-1))
+            x_move=-1;
+    }
+    if(ud==true){ //dawnbreaker will turn down
+        y_move=-1;
+        if(dawnposy-4<50)
+            y_move=1;
+    }
+    if(ud==false){ //turn up
+        y_move=1;
+        if(dawnposy+4>(WINDOW_HEIGHT-1))
+            y_move=-1;
+    }
+}
+void Dawnbreaker::targetforalpha(){
+    int min_x_distance=114514;
+    int min_y_distance=114514;
+    int x_distance,y_distance;
+    int dawnposx=GetX();
+    int dawnposy=GetY();
+    int rl=2; //right or left turn_right=0 turn_left=1
+    int ud=2; //up or down turn_up=0 turn_down=1
+    for(auto i:get_world()->get_ob()){
+        if(((i)->gettype()==4) && (i)->jud_life()){
+            x_distance=(i)->GetX()-dawnposx;
+            y_distance=(i)->GetY()-dawnposy;
+            if(x_distance <= 0)
+                x_distance=(-1)*x_distance;
+            if(y_distance <= 0)
+                y_distance=(-1)*y_distance;
+            if(x_distance <= min_x_distance){
+                min_x_distance=x_distance;
+                if((i)->GetX()-dawnposx >= 100 || (i)->GetX()-dawnposx <= -100){
+                    if((i)->GetX()-dawnposx >= 100){
+                        rl=false;
+                    }
+                    else{
+                        rl=true;
+                    }
+                }
+                else if((i)->GetX()-dawnposx >=0 && (i)->GetX()-dawnposx <= 100){
+                    rl=true; //dawnbreaker will turn left
+                }
+                else{
+                    rl=false; //turn right
+                }
+            }
+            if(y_distance <= min_y_distance){
+                min_y_distance=y_distance;
+                if((i)->GetY()-dawnposy >= 100 || (i)->GetY()-dawnposy <= -100){
+                    ud=2; //dawnbreaker will stay still
+                }
+                else if((i)->GetY()-dawnposy >=0 && (i)->GetY()-dawnposy < 100){
+                    ud=true; //dawnbreaker will turn down
+                    rl=randInt(0,1);
+                }
+                else{
+                    ud=false; //turn up
+                    rl=randInt(0,1);
+                }
+            }
+        }
+    }
+    if(rl==2 && ud==2){
+        x_move=0;
+        y_move=0;
+    }
+    if(rl==true){ //dawnbreaker will turn left
+        x_move=-1;
+        if(dawnposx-4<0)
+            x_move=1;
+    }
+    if(rl==false){ //turn right
+        x_move=1;
+        if(dawnposx+4>(WINDOW_WIDTH-1))
+            x_move=-1;
+    }
+    if(ud==true){ //dawnbreaker will turn down
+        y_move=-1;
+        if(dawnposy-4<50)
+            y_move=1;
+    }
+    if(ud==false){ //turn up
+        y_move=1;
+        if(dawnposy+4>(WINDOW_HEIGHT-1))
+            y_move=-1;
+    }
+    if(dawnposx <= 2*(WINDOW_WIDTH-1)/10 && rl==true){
+        x_move=1;
+    }
+    if(dawnposx >= 8*(WINDOW_WIDTH-1)/10 && rl==false){
+        x_move=-1;
+    }
+    if(dawnposy <= 20 && ud==true){
+        y_move=1;
+    }
+}
+double Dawnbreaker::heuristic(GameWorld *world){
+    double result=0.0;
+    int pos_x;
+    int pos_y;
+    int diff_x;
+    int diff_y;
+    int min_x_dist=114514;
+    int min_y_dist=114514;
+    double min_distance_alpha=114514114514.0;
+    double min_distance_bullet=114514114514.0;
+    int cnt_left_bullet=0;
+    int cnt_right_bullet=0;
+    int cnt_left_alpha=0;
+    int cnt_right_alpha=0;
+    int total_left_alpha=0;
+    int total_right_alpha=0;
+    for(auto i:world->get_ob()){
+        if((i)->gettype()==1){
+            pos_x=(i)->GetX();
+            pos_y=(i)->GetY();
+            break;
+        }
+    }
+    for(auto i:world->get_ob()){
+        if((i)->gettype()==4){
+            diff_x=abs(pos_x - (i)->GetX());
+            diff_y=pos_y - (i)->GetY();
+            /*if((i)->GetX() - pos_x >= 0){
+                cnt_right_alpha++;
+                total_right_alpha+=diff_x;
+            }
+            else{
+                cnt_left_alpha++;
+                total_left_alpha+=diff_x;
+            }
+            if(diff_x <= min_x_dist){
+                min_x_dist=diff_x;
+                min_y_dist=diff_y;
+            }
+            if(sqrt(diff_x*diff_x+diff_y*diff_y) <= min_distance_alpha){
+                min_distance_alpha=sqrt(diff_x*diff_x+diff_y*diff_y);
+            }*/
+            min_x_dist=fmin(diff_x,min_x_dist);
+        }
+        if((i)->gettype()==7){
+            if((i)->GetX() - pos_x >= 0){
+                cnt_right_bullet++;
+            }
+            else{
+                cnt_left_bullet++;
+            }
+            diff_x=abs(pos_x - (i)->GetX());
+            diff_y=abs(pos_y - (i)->GetY());
+            if(diff_x<= min_distance_bullet){
+                min_distance_bullet=diff_x;
+            }
+        }
+    }
+    //if(cnt_right_alpha - cnt_left_alpha != 0){
+        //result-=abs(cnt_right_alpha - cnt_left_alpha);
+        //result-=min_x_dist;
+        //result+=10*min_y_dist;
+    //}
+    /*else{
+        result+=1000;
+    }
+    if(cnt_right_bullet - cnt_left_bullet != 0){
+        result-=abs(cnt_right_bullet - cnt_left_bullet);
+    }
+    else{
+        result+=100000;
+    }
+    if(min_distance <= 100){
+        result-=min_distance;
+    }*/
+    /*if(min_distance >= 100){
+        result+=min_distance;
+    }
+    else{
+        result+=1/min_distance;
+    }*/
+    //result=-abs(total_right_alpha - total_left_alpha);
+    //result-=10*min_x_dist+min_y_dist;
+    //if(min_y_dist < 0){
+    //    result-=3*min_y_dist;
+    //}
+    //result=4*min_x_dist*min_x_dist-min_distance_alpha*min_distance_alpha-3*min_distance_bullet*min_distance_bullet;
+    //result=-min_x_dist;
+    return result;
+}
+void Dawnbreaker::Astar(GameWorld *world){
+    std::priority_queue<std::pair<double,std::pair<int,int>>> pq;
+    for(int i=-1;i<=1;i++){
+        for(int j=-1;j<=1;j++){
+            int i_copy=i;
+            int j_copy=j;
+            GameWorld *new_world=getnextworld(world,1,i,j);
+            double heur=heuristic(new_world);
+            if(i_copy>0){
+                i_copy=-2;
+            }
+            if(j_copy>0){
+                j_copy=-2;
+            }
+            std::pair<int,int> move(i_copy,j_copy);
+            std::pair<double,std::pair<int,int>> temp(heur,move);
+            pq.push(temp);
+        }
+    }
+    if(!pq.empty()){
+        std::pair<int,int> result=pq.top().second;
+        x_move=result.first;
+        y_move=result.second;
+        if(x_move==-2){
+            x_move=1;
+        }
+        if(y_move==-2){
+            y_move=1;
+        }
+    }
+    else{
+        x_move=0;
+        y_move=0;
+    }
+}
 
 
 //Star
@@ -96,10 +428,11 @@ void B_bullet::Update(){
                     (i)->set_life(false);
                     get_world()->change_on();
                     get_world()->change_raquire();
+                    get_world()->change_have_destroyed();
                     GameObject* e=new Explosion((i)->GetX(),(i)->GetY(),get_world());
                     get_world()->push(e);
                     if(i->gettype()==4)
-                        get_world()->IncreaseScore(50);
+                        get_world()->IncreaseScore(1);
                     else if(i->gettype()==5)
                         get_world()->IncreaseScore(100);
                     else if(i->gettype()==6)
@@ -133,10 +466,11 @@ void B_bullet::Update(){
                     (i)->set_life(false);
                     get_world()->change_on();
                     get_world()->change_raquire();
+                    get_world()->change_have_destroyed();
                     GameObject* e=new Explosion((i)->GetX(),(i)->GetY(),get_world());
                     get_world()->push(e);
                     if(i->gettype()==4)
-                        get_world()->IncreaseScore(50);
+                        get_world()->IncreaseScore(1);
                     else if(i->gettype()==5)
                         get_world()->IncreaseScore(100);
                     else if(i->gettype()==6)
@@ -206,15 +540,21 @@ void Alphatron::Update(){
             set_life(false);
             get_world()->change_on();
             get_world()->change_raquire();
+            get_world()->change_have_destroyed();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            get_world()->IncreaseScore(50);
+            get_world()->IncreaseScore(1);
             return ;
         }
     }
     for(auto i:get_world()->get_ob())
         if(i->gettype()==1){
-            if(abs(GetX()-i->GetX())<=10&&energy>=25&&randInt(1,100)<=25) {
+            int diff=(i)->GetX()-GetX();
+            if(diff<=0){
+                diff=(-1)*diff;
+            }
+            if(energy>=25&&randInt(1,100)<=50&&diff<=30) {
+            //if(energy>=25&&randInt(1,100)<=25) {
                 energy-=25;
                 GameObject* r=new R_bullet(GetX(),GetY()-50,180,damage,get_world());
                 get_world()->push(r);
@@ -263,9 +603,10 @@ void Alphatron::Update(){
             set_life(false);
             get_world()->change_on();
             get_world()->change_raquire();
+            get_world()->change_have_destroyed();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            get_world()->IncreaseScore(50);
+            get_world()->IncreaseScore(1);
             return ;
         }
     }

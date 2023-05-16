@@ -11,7 +11,7 @@
 static const std::string ASSET_DIR = std::filesystem::current_path().string()
     .substr(0, std::filesystem::current_path().string().find_last_of('/')) + "/assets/";
 #else
-static const std::string ASSET_DIR = "../assets/";
+static const std::string ASSET_DIR = "../../assets/";
 #endif
 
 enum class LevelStatus {
@@ -51,7 +51,7 @@ const int IMGID_POWERUP_GOODIE = 9;
 const int IMGID_METEOR_GOODIE = 10;
 const int IMGID_HP_RESTORE_GOODIE = 11;
 
-const int MS_PER_FRAME = 16;
+const int MS_PER_FRAME = 0;
 
 // Returns a random integer within [min, max] (inclusive). 
 inline int randInt(int min, int max) {

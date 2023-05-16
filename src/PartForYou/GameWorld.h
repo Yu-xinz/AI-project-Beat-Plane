@@ -29,11 +29,16 @@ public:
 
   void change_raquire();
 
+  void change_have_destroyed();
+
+
+
 private:
   std::list <GameObject*> object;
   int love;
   int require;
   int max_on,on;
+  int have_destroyed;
 };
 
 #endif // !GAMEWORLD_H__

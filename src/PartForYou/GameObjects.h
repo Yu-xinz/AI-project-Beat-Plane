@@ -21,9 +21,17 @@ public:
     virtual int get_hp(){return 0;}
     virtual int get_dmg(){return 0;}
     virtual void set_hp(int dg){}
-    GameWorld* get_world();
+    virtual void set_depth(int dep){}
+    virtual int get_depth(){return 0;};
+    virtual void dodgebullet()=0;
+    virtual void targetforalpha()=0;
+    virtual void Astar(GameWorld *world)=0;
+    virtual double heuristic(GameWorld *world)=0;
+    virtual double evaluatefunction();
     int gettype();
     void settype(int ty);
+    GameWorld* get_world();
+    GameWorld* getnextworld(GameWorld *world,int type,int x_move,int y_move);
     bool track(int x1,int y1,int x2,int y2,double s1,double s2);
 private:
     bool life;
@@ -46,10 +54,16 @@ public:
     virtual void add_meteor();
     virtual int get_hp();
     virtual void set_hp(int dg);
+    virtual void dodgebullet();
+    virtual void targetforalpha();
+    virtual void Astar(GameWorld *world);
+    virtual double heuristic(GameWorld *world);
 private:
     int hp,energy;
+    int depth;
     int x_move,y_move;
     int num_met,level;
+    
 };
 
 
@@ -61,6 +75,10 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
     virtual bool jud_meteor(bool fire2){return false;}
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 };
 
 
@@ -73,6 +91,10 @@ public:
     virtual bool jud_bullet(bool fire){return false;}
     virtual bool jud_meteor(bool fire2){return false;}
     virtual int get_dmg();
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 private:
     int damage;
 };
@@ -89,9 +111,13 @@ public:
     virtual int get_hp();
     virtual void set_hp(int dg);
     virtual int get_dmg();
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 private:
     int hp,energy;
-    int damage,speed;
+    int damage,speed; //speed=2
     int time,move_dir;
 };
 
@@ -106,6 +132,10 @@ public:
     virtual bool jud_meteor(bool fire2){return false;}
     virtual int get_hp();
     virtual void set_hp(int dg);
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 private:
     int hp,speed;
     int time,move_dir;
@@ -123,6 +153,10 @@ public:
     virtual int get_hp();
     virtual void set_hp(int dg);
     virtual int get_dmg();
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 private:
     int hp,energy;
     int damage,speed;
@@ -139,6 +173,10 @@ public:
     virtual bool jud_bullet(bool fire){return false;}
     virtual bool jud_meteor(bool fire2){return false;}
     virtual int get_dmg();
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 private:
     int damage;
 };
@@ -152,6 +190,10 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
     virtual bool jud_meteor(bool fire2){return false;}
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 };
 
 
@@ -163,6 +205,10 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;} 
     virtual bool jud_meteor(bool fire2){return false;}
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 };
 
 
@@ -174,6 +220,10 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;} 
     virtual bool jud_meteor(bool fire2){return false;}
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 };
 
 
@@ -185,6 +235,10 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;} 
     virtual bool jud_meteor(bool fire2){return false;}
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 };
 
 
@@ -196,5 +250,9 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;} 
     virtual bool jud_meteor(bool fire2){return false;}
+    virtual void dodgebullet(){return;}
+    virtual void targetforalpha(){return;}
+    virtual void Astar(GameWorld *world){return;}
+    virtual double heuristic(GameWorld *world){return 0;}
 };
 #endif // GAMEOBJECTS_H__
