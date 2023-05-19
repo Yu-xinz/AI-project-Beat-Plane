@@ -1,5 +1,6 @@
 #include "GameWorld.h"
 #include <cstring>
+// #include <omp.h>
 
 GameWorld::GameWorld() {
   love=5;
@@ -18,7 +19,7 @@ void GameWorld::Init() {
     object.push_back(new Star(x,y,sz,this));
   }
   //require=3*GetLevel();
-  max_on=1;
+  max_on=3;
   on=0;
   have_destroyed=0;
 }
@@ -37,6 +38,7 @@ LevelStatus GameWorld::Update() {
   }
   std::list <GameObject*>::iterator bg=object.begin();
   double result=(*bg)->evaluatefunction();
+  // #pragma omp parallel for
   for(std::list <GameObject*>::iterator i=object.begin();i!=object.end();++i)
   {
     /*if(result>GetScore()){
@@ -45,8 +47,6 @@ LevelStatus GameWorld::Update() {
     else{
       (*i)->dodgebullet();
     }*/
-    GameWorld *world=this;
-    (*i)->Astar(world);
     (*i)->Update();
     if((*i)->jud_bullet(1)){
       GameObject* b=new B_bullet((*i)->GetX(),(*i)->GetY()+50,0.5+0.1*(*i)->get_level(),5+3*(*i)->get_level(),this);
@@ -72,7 +72,11 @@ LevelStatus GameWorld::Update() {
     else
       i++;
   }
-  std::string s = "HP: " + std::to_string((*bg)->get_hp()) + "/100" + "   Life: " + std::to_string(love) + "   Enemies(have destroyed / on screen): " + std::to_string(have_destroyed) + "/" + std::to_string(on) + "   Score: " + std::to_string(GetScore())+"  evaluate"+std::to_string(result);
+  std::string s = "HP: " + std::to_string((*bg)->get_hp()) 
+  + "/100" + "   Life: " + std::to_string(love) 
+  + "   Enemies(have destroyed / on screen): " 
+  + std::to_string(have_destroyed) + "/" + std::to_string(on) 
+  + "   Score: " + std::to_string(GetScore()) + "  evaluate"+std::to_string(result);
   SetStatusBarMessage(s);
   return LevelStatus::ONGOING;
 }

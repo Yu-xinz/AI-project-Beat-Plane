@@ -4,6 +4,13 @@
 #include "ObjectBase.h"
 #include "GameWorld.h"
 
+/// @brief A state for Dawnbreaker
+typedef struct state {
+    double x_move;
+    double y_move;
+    double health;
+} State;
+
 class GameWorld;
 //Gameobject
 class GameObject : public ObjectBase {
@@ -63,7 +70,10 @@ private:
     int depth;
     int x_move,y_move;
     int num_met,level;
-    
+    double evaluateBulletDirection(GameWorld *world, State state);
+    double evaluateEnemyDirection(GameWorld *world, State state);
+    double evaluateEnemyDistance(GameWorld *world, double threshold, State state);
+    double getEvaluation(State state);
 };
 
 
@@ -255,4 +265,5 @@ public:
     virtual void Astar(GameWorld *world){return;}
     virtual double heuristic(GameWorld *world){return 0;}
 };
+
 #endif // GAMEOBJECTS_H__

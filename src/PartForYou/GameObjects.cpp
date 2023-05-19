@@ -84,6 +84,7 @@ Dawnbreaker::Dawnbreaker(GameWorld* wrd):GameObject(IMGID_DAWNBREAKER,300,100,0,
 }
 
 void Dawnbreaker::Update(){
+    Astar(get_world());
     if((GetX()+x_move*4)>=0&&(GetX()+x_move*4)<=(WINDOW_WIDTH-1))
         MoveTo(GetX()+x_move*4,GetY());
     if((GetY()+y_move*4)>=50&&(GetY()+y_move*4)<=(WINDOW_HEIGHT-1))
@@ -355,35 +356,25 @@ double Dawnbreaker::heuristic(GameWorld *world){
     //result=-min_x_dist;
     return result;
 }
+/// @brief select the next state with maximum evaluation with depth == 1.
+/// @param world 
 void Dawnbreaker::Astar(GameWorld *world){
     std::priority_queue<std::pair<double,std::pair<int,int>>> pq;
     for(int i=-1;i<=1;i++){
         for(int j=-1;j<=1;j++){
-            int i_copy=i;
-            int j_copy=j;
-            GameWorld *new_world=getnextworld(world,1,i,j);
-            double heur=heuristic(new_world);
-            if(i_copy>0){
-                i_copy=-2;
-            }
-            if(j_copy>0){
-                j_copy=-2;
-            }
-            std::pair<int,int> move(i_copy,j_copy);
-            std::pair<double,std::pair<int,int>> temp(heur,move);
-            pq.push(temp);
+            State state{i*4, j*4, get_hp()};
+            double eval = getEvaluation(state);
+            std::pair<int,int> move(i,j);
+            std::pair<double,std::pair<int,int>> temp(eval, move);
+            if (eval) //< do not act when nothing get considered (eval == 0)
+                pq.push(temp);
+            std::cout << "eval = " << eval << std::endl;
         }
     }
     if(!pq.empty()){
         std::pair<int,int> result=pq.top().second;
         x_move=result.first;
         y_move=result.second;
-        if(x_move==-2){
-            x_move=1;
-        }
-        if(y_move==-2){
-            y_move=1;
-        }
     }
     else{
         x_move=0;
@@ -391,6 +382,97 @@ void Dawnbreaker::Astar(GameWorld *world){
     }
 }
 
+/// @brief Get an *WEIGHTED* evaluation based on the directions between bullets and dawnbreaker
+/// @param world
+/// @param state description
+/// @return evaluation 
+double Dawnbreaker::evaluateBulletDirection(GameWorld *world, State state)
+{
+    double eval = 0.0;
+    double tmp;
+    auto objects = world->get_ob();
+    auto x_pos = GetX() + state.x_move;
+    auto y_pos = GetY() + state.y_move;
+    int cnt = 0;
+    for (auto each : objects)
+    {
+        if (each->gettype() != 7) /**< not a bullet*/
+            continue;
+        if (each->GetY() - y_pos > 0.3 * WINDOW_HEIGHT || each->GetY() - y_pos < 0)
+            continue;
+        auto dawnToBullet = atan2(each->GetX() - x_pos, each->GetY() - y_pos) * 180 / M_PI; //
+        auto bulletDirection = each->GetDirection() - 270;
+        eval = 
+            90 > abs(dawnToBullet - bulletDirection) ? 
+            -1 * abs(dawnToBullet - bulletDirection) 
+            : -1 * (180 - abs(dawnToBullet - bulletDirection));
+        cnt++;
+    }   
+    return eval;
+}
+
+/// @brief 
+/// @param world 
+/// @param state 
+/// @return evaluation
+double Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
+{
+    double eval = 0.0;
+    double tmp;
+    auto objects = world->get_ob();
+    auto x_pos = GetX() + state.x_move;
+    auto y_pos = GetY() + state.y_move;
+    int cnt = 0;
+    for (auto each : objects)
+    {
+        if (each->gettype() != 5 && each->gettype() != 6 && each->gettype() != 7) /**< not a bullet*/
+            continue;
+        if (each->GetY() - y_pos > 0.15 * WINDOW_HEIGHT || each->GetY() - y_pos < 0)
+            continue;
+        auto dawnToBullet = atan2(each->GetX() - x_pos, each->GetY() - y_pos) * 180 / M_PI; //
+        auto bulletDirection = each->GetDirection() - 270;
+        eval = 
+            90 > abs(dawnToBullet - bulletDirection) ? 
+            -1 * abs(dawnToBullet - bulletDirection) 
+            : -1 * (180 - abs(dawnToBullet - bulletDirection));
+        cnt++;
+    }   
+    return eval;
+}
+
+/// @brief Get an *WEIGHTED* evaluation based on the X distances between
+/// @param world, threshold
+/// @return 
+double Dawnbreaker::evaluateEnemyDistance(GameWorld *world, double threshold, State state)
+{
+    double eval = 0.0;
+    auto objects = world->get_ob();
+    auto x_pos = GetX() + state.x_move;
+    auto y_pos = GetY() + state.y_move;
+    int cnt = 0;
+    for (auto each : objects)
+    {
+        if (each->gettype() != 4 & each->gettype() != 5 & each->gettype() != 6) /**< not a bullet*/
+            continue;
+        if (abs(each->GetY() - y_pos) < 10) //< too close
+            continue;
+        if (abs(each->GetX() - x_pos) > threshold) //< under the enemy
+            continue;    
+        eval += 1/(0.1 + abs(each->GetX() - x_pos)) + 0.05 * abs(each->GetY() - y_pos); 
+        cnt++;
+    }   
+    return eval;
+}
+
+/// @brief 
+/// @return retval:double
+double Dawnbreaker::getEvaluation(State state)
+{
+    auto world = get_world();
+    auto retval = 1 * evaluateBulletDirection(world, state) 
+                + 1 * evaluateEnemyDistance(world, 600, state);
+    return retval;
+}
 
 //Star
 Star::Star(int x, int y, double size, GameWorld* wrd):GameObject(IMGID_STAR,x,y,0,4,size,wrd){
