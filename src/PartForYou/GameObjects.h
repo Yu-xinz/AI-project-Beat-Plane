@@ -33,12 +33,14 @@ public:
     virtual void dodgebullet()=0;
     virtual void targetforalpha()=0;
     virtual void Astar(GameWorld *world)=0;
-    virtual double heuristic(GameWorld *world)=0;
+    virtual void Reinforcement(GameWorld *world)=0;
+    virtual void Q_iteration(GameWorld *world)=0;
     virtual double evaluatefunction();
     int gettype();
     void settype(int ty);
     GameWorld* get_world();
-    GameWorld* getnextworld(GameWorld *world,int type,int x_move,int y_move);
+    //GameWorld* get_world_copy(GameWorld* world);
+    GameWorld* getnextworld(GameWorld *world,int x_move,int y_move);
     bool track(int x1,int y1,int x2,int y2,double s1,double s2);
 private:
     bool life;
@@ -64,15 +66,37 @@ public:
     virtual void dodgebullet();
     virtual void targetforalpha();
     virtual void Astar(GameWorld *world);
-    virtual double heuristic(GameWorld *world);
+    virtual void Reinforcement(GameWorld *world);
+    virtual void Q_iteration(GameWorld *world);
+    /* state space:
+            start                                                   0
+            crashed by bullet                                       1
+            crashed by alpha                                        2
+            crashed by alpha and bullet                             3
+            x_distance between Dawnbreaker and alpha (beat alpha)   4
+            nothing                                                 5
+            end (hp=0)                                              6
+       directions(actions):
+            up (0,1)            0
+            right (1,0)         1
+            down (0,-1)         2
+            left (-1,0)         3       
+            up+right (1,1)      4 
+            up+left (-1,1)      5  
+            down+right (1,-1)   6
+            down+left (-1,-1)   7  
+            idle (0,0)          8
+    */
 private:
     int hp,energy;
     int depth;
     int x_move,y_move;
     int num_met,level;
+    double Qtable[7][9];
     double evaluateBulletDirection(GameWorld *world, State state);
     double evaluateEnemyDirection(GameWorld *world, State state);
     double evaluateEnemyDistance(GameWorld *world, double threshold, State state);
+    double evaluateBorder(GameWorld *world, State state);
     double getEvaluation(State state);
 };
 
@@ -88,7 +112,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 };
 
 
@@ -104,7 +129,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 private:
     int damage;
 };
@@ -124,7 +150,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 private:
     int hp,energy;
     int damage,speed; //speed=2
@@ -145,7 +172,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 private:
     int hp,speed;
     int time,move_dir;
@@ -166,7 +194,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 private:
     int hp,energy;
     int damage,speed;
@@ -186,7 +215,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 private:
     int damage;
 };
@@ -203,7 +233,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 };
 
 
@@ -218,7 +249,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 };
 
 
@@ -233,7 +265,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 };
 
 
@@ -248,7 +281,8 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 };
 
 
@@ -263,7 +297,7 @@ public:
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
     virtual void Astar(GameWorld *world){return;}
-    virtual double heuristic(GameWorld *world){return 0;}
+    virtual void Reinforcement(GameWorld *world){return;}
+    virtual void Q_iteration(GameWorld *world){return;}
 };
-
 #endif // GAMEOBJECTS_H__

@@ -1,6 +1,7 @@
 #include "GameObjects.h"
 #include <cmath>
 #include <queue>
+#define M_PI 3.1415926
 
 GameObject::GameObject(int imageID, int x, int y, int direction, int layer, double size, GameWorld* wrd):ObjectBase(imageID,x,y,direction,layer,size){
     world=wrd;
@@ -10,12 +11,15 @@ bool GameObject::jud_life(){return life;}
 int GameObject::gettype(){return type;}
 void GameObject::settype(int ty){type=ty;}
 GameWorld* GameObject::get_world(){return world;}
-GameWorld* GameObject::getnextworld(GameWorld *world,int type,int x_move,int y_move){
+/*GameWorld* GameObject::get_world_copy(GameWorld *world){
+    GameWorld* new_world;
+    new_world->get_ob()=world->get_ob();
+    return new_world;
+}*/
+GameWorld* GameObject::getnextworld(GameWorld *world,int x_move,int y_move){
     for(auto i:world->get_ob()){
-        if((i)->gettype()==type){
-            (i)->set_move(x_move,y_move);
-            (i)->Update();
-        }
+        (i)->set_move(x_move,y_move);
+        (i)->Update();
     }
     return world;
 }
@@ -266,99 +270,15 @@ void Dawnbreaker::targetforalpha(){
         y_move=1;
     }
 }
-double Dawnbreaker::heuristic(GameWorld *world){
-    double result=0.0;
-    int pos_x;
-    int pos_y;
-    int diff_x;
-    int diff_y;
-    int min_x_dist=114514;
-    int min_y_dist=114514;
-    double min_distance_alpha=114514114514.0;
-    double min_distance_bullet=114514114514.0;
-    int cnt_left_bullet=0;
-    int cnt_right_bullet=0;
-    int cnt_left_alpha=0;
-    int cnt_right_alpha=0;
-    int total_left_alpha=0;
-    int total_right_alpha=0;
-    for(auto i:world->get_ob()){
-        if((i)->gettype()==1){
-            pos_x=(i)->GetX();
-            pos_y=(i)->GetY();
-            break;
-        }
-    }
-    for(auto i:world->get_ob()){
-        if((i)->gettype()==4){
-            diff_x=abs(pos_x - (i)->GetX());
-            diff_y=pos_y - (i)->GetY();
-            /*if((i)->GetX() - pos_x >= 0){
-                cnt_right_alpha++;
-                total_right_alpha+=diff_x;
-            }
-            else{
-                cnt_left_alpha++;
-                total_left_alpha+=diff_x;
-            }
-            if(diff_x <= min_x_dist){
-                min_x_dist=diff_x;
-                min_y_dist=diff_y;
-            }
-            if(sqrt(diff_x*diff_x+diff_y*diff_y) <= min_distance_alpha){
-                min_distance_alpha=sqrt(diff_x*diff_x+diff_y*diff_y);
-            }*/
-            min_x_dist=fmin(diff_x,min_x_dist);
-        }
-        if((i)->gettype()==7){
-            if((i)->GetX() - pos_x >= 0){
-                cnt_right_bullet++;
-            }
-            else{
-                cnt_left_bullet++;
-            }
-            diff_x=abs(pos_x - (i)->GetX());
-            diff_y=abs(pos_y - (i)->GetY());
-            if(diff_x<= min_distance_bullet){
-                min_distance_bullet=diff_x;
-            }
-        }
-    }
-    //if(cnt_right_alpha - cnt_left_alpha != 0){
-        //result-=abs(cnt_right_alpha - cnt_left_alpha);
-        //result-=min_x_dist;
-        //result+=10*min_y_dist;
-    //}
-    /*else{
-        result+=1000;
-    }
-    if(cnt_right_bullet - cnt_left_bullet != 0){
-        result-=abs(cnt_right_bullet - cnt_left_bullet);
-    }
-    else{
-        result+=100000;
-    }
-    if(min_distance <= 100){
-        result-=min_distance;
-    }*/
-    /*if(min_distance >= 100){
-        result+=min_distance;
-    }
-    else{
-        result+=1/min_distance;
-    }*/
-    //result=-abs(total_right_alpha - total_left_alpha);
-    //result-=10*min_x_dist+min_y_dist;
-    //if(min_y_dist < 0){
-    //    result-=3*min_y_dist;
-    //}
-    //result=4*min_x_dist*min_x_dist-min_distance_alpha*min_distance_alpha-3*min_distance_bullet*min_distance_bullet;
-    //result=-min_x_dist;
-    return result;
-}
-/// @brief select the next state with maximum evaluation with depth == 1.
-/// @param world 
 void Dawnbreaker::Astar(GameWorld *world){
+    /*double result=evaluatefunction();
+    if(result > get_world()->GetScore()){
+        targetforalpha();
+    }
+    else{
+        dodgebullet();
+    }
+    return;*/
     std::priority_queue<std::pair<double,std::pair<int,int>>> pq;
     for(int i=-1;i<=1;i++){
         for(int j=-1;j<=1;j++){
@@ -368,7 +288,7 @@ void Dawnbreaker::Astar(GameWorld *world){
             std::pair<double,std::pair<int,int>> temp(eval, move);
             if (eval) //< do not act when nothing get considered (eval == 0)
                 pq.push(temp);
-            std::cout << "eval = " << eval << "move:" << i << "," << j << std::endl;
+            std::cout << "eval = " << eval << std::endl;
         }
     }
     if(!pq.empty()){
@@ -381,7 +301,63 @@ void Dawnbreaker::Astar(GameWorld *world){
         y_move=0;
     }
 }
+void Dawnbreaker::Q_iteration(GameWorld *world){
+    double alpha=1;
+    double lamda=1;
+    double max_qval=-114514.0;
+    double max_next_qval=-114514.0;
+    int max_action;
+    int x,y,s1,change_hp,last_hp,reward=0;
+    int s=0;
+    for(int m=0;m<99;m++){
+        for(int i=0;i<9;i++){
+            if(Qtable[s][i]>=max_qval){
+                max_qval=Qtable[s][i];
+                max_action=i;
+            }
+        }
+        if(max_action==0){x=0;y=1;}
+        else if(max_action==1){x=1;y=0;}
+        else if(max_action==2){x=0;y=-1;}
+        else if(max_action==3){x=-1;y=0;}
+        else if(max_action==4){x=1;y=1;}
+        else if(max_action==5){x=-1;y=1;}
+        else if(max_action==6){x=1;y=-1;}
+        else if(max_action==7){x=-1;y=-1;}
+        else if(max_action==8){x=0;y=0;}
+        set_move(x,y);
+        GameWorld* new_world=getnextworld(world,x,y);
+        s1=5;
+        for(auto i:world->get_ob()){
+            if((i)->gettype()==1){
+                change_hp=(-1)*(i)->get_hp();
+            }
+        }
+        for(auto i:new_world->get_ob()){
+            if((i)->gettype()==1){
+                change_hp+=(i)->get_hp();
+                last_hp=(i)->get_hp();
+            }
+        }
+        if(change_hp==-5){s1=1;reward=-5;}
+        if(change_hp==-10){s1=2;reward=-10;}
+        if(change_hp==-15){s1=3;reward=-15;}
+        if(new_world->GetScore()>world->GetScore()){s1=4;reward=50;}
+        if(last_hp==0){s1=6;reward=-200;}
+        for(int i=0;i<9;i++){
+            if(Qtable[s1][i]>=max_next_qval){
+                max_next_qval=Qtable[s1][i];
+            }
+        }
+        Qtable[s][max_action]=Qtable[s][max_action]+alpha*(reward+lamda*max_next_qval-Qtable[s][max_action]);
+        s=s1;
+        if(last_hp==0){break;}
+    }
 
+}
+void Dawnbreaker::Reinforcement(GameWorld *world){
+    
+}
 /// @brief Get an *WEIGHTED* evaluation based on the directions between bullets and dawnbreaker
 /// @param world
 /// @param state description
@@ -397,98 +373,75 @@ double Dawnbreaker::evaluateBulletDirection(GameWorld *world, State state)
     int cnt = 0;
     for (auto each : objects)
     {
-        if (
-            each->gettype() != 7
-        ) /**< not a bullet*/
+        if (each->gettype() != 7) /**< not a bullet*/
             continue;
-        if (abs(each->GetY() - y_pos) > 0.5 * WINDOW_HEIGHT)
+        if (each->GetY() - y_pos > 0.3 * WINDOW_HEIGHT || each->GetY() - y_pos < 0)
             continue;
-        auto dawnToBullet = 
-                atan2(each->GetX() - x_pos, each->GetY() - y_pos) > 0 ?
-                atan2(each->GetX() - x_pos, each->GetY() - y_pos) * 180 / M_PI:
-                360 + (atan2(each->GetX() - x_pos, each->GetY() - y_pos) * 180 / M_PI); //
-                 //
-        auto bulletDirection = 270 - each->GetDirection();
-        weightByDistance = 50000 / (1 + abs(each->GetX() - x_pos) + abs(each->GetY() - y_pos));
-        tmp = 
-            180 > abs(dawnToBullet - bulletDirection) ? 
+        auto dawnToBullet = atan2(each->GetX() - x_pos, each->GetY() - y_pos) * 180 / M_PI; //
+        auto bulletDirection = each->GetDirection() - 270;
+        weightByDistance = 500 / (1 + abs(each->GetX() - x_pos) + abs(each->GetY() - y_pos));
+        eval += 
+            90 > abs(dawnToBullet - bulletDirection) ? 
             -1 * abs(dawnToBullet - bulletDirection) 
-            : -1 * (360 - abs(dawnToBullet - bulletDirection));
-        //std::cout << "Angle: " << tmp << std::endl;
-        eval += weightByDistance * tmp;
+            : -1 * (180 - abs(dawnToBullet - bulletDirection));
+        eval *= weightByDistance;
         cnt++;
     }   
-    if (!cnt) eval = 0.0;
     return eval;
 }
 
-/// @brief Get the evaluation by Enemies direction
+/// @brief 
 /// @param world 
 /// @param state 
-/// @return evaluation 
+/// @return evaluation
 double Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
 {
     double eval = 0.0;
     double tmp;
-    double weightByDistance;
     auto objects = world->get_ob();
     auto x_pos = GetX() + state.x_move;
     auto y_pos = GetY() + state.y_move;
     int cnt = 0;
     for (auto each : objects)
     {
+        if (each->gettype() != 5 && each->gettype() != 6 && each->gettype() != 7) /**< not a bullet*/
+            continue;
+        if (each->GetY() - y_pos > 0.15 * WINDOW_HEIGHT || each->GetY() - y_pos < 0)
+            continue;
+        auto dawnToBullet = atan2(each->GetX() - x_pos, each->GetY() - y_pos) * 180 / M_PI; //
+        auto bulletDirection = each->GetDirection() - 270;
+        eval = 
+            90 > abs(dawnToBullet - bulletDirection) ? 
+            -1 * abs(dawnToBullet - bulletDirection) 
+            : -1 * (180 - abs(dawnToBullet - bulletDirection));
         cnt++;
     }   
     return eval;
 }
 
-/// @brief Get an *WEIGHTED* evaluation based on the X and Y distances between
+/// @brief Get an *WEIGHTED* evaluation based on the X distances between
 /// @param world, threshold
 /// @return 
 double Dawnbreaker::evaluateEnemyDistance(GameWorld *world, double threshold, State state)
 {
     double eval = 0.0;
     auto objects = world->get_ob();
+    double weightByDistance;
     auto x_pos = GetX() + state.x_move;
     auto y_pos = GetY() + state.y_move;
     int cnt = 0;
-    double tmp;
-    double weightByDistance;
     for (auto each : objects)
     {
         if (each->gettype() != 4 & each->gettype() != 5 & each->gettype() != 6) /**< not a bullet*/
             continue;
-        if (abs(each->GetX() - x_pos) + abs(each->GetY() - y_pos) < 0.15 * WINDOW_HEIGHT) //< too close
-        {
-            auto dawnToBullet = 
-                atan2(each->GetX() - x_pos, each->GetY() - y_pos) > 0 ?
-                atan2(each->GetX() - x_pos, each->GetY() - y_pos) * 180 / M_PI:
-                360 + (atan2(each->GetX() - x_pos, each->GetY() - y_pos) * 180 / M_PI); //
-                 //
-            auto bulletDirection = 270 - each->GetDirection();
-            weightByDistance = 5000 / (1 + abs(each->GetX() - x_pos) + abs(each->GetY() - y_pos));
-            tmp = 
-                180 > abs(dawnToBullet - bulletDirection) ? 
-                -1 * abs(dawnToBullet - bulletDirection) 
-                : -1 * (360 - abs(dawnToBullet - bulletDirection));
-            //std::cout << "Angle: " << tmp << std::endl;
-            eval += weightByDistance * tmp;
-        }
-        else if(each->GetY() - y_pos > 0.4 *WINDOW_HEIGHT) {
-            weightByDistance = 0.002 * (abs(each->GetX() - x_pos) + abs(each->GetY() - y_pos));
-            eval += 0.01/(0.2 + abs(each->GetX() - x_pos)) * weightByDistance;
-            eval -= 0.005 / (0.2 + abs(each->GetY() - y_pos)) * weightByDistance; 
-        }
-        else continue;
+        if (abs(each->GetY() - y_pos) < 0.3 * WINDOW_HEIGHT) //< too close
+            continue;
+        if (abs(each->GetX() - x_pos) > threshold) //< x too far
+            continue;    
+        weightByDistance = 500 / (1 + abs(each->GetX() - x_pos) + abs(each->GetY() - y_pos));
+        eval += 1/(0.1 + abs(each->GetX() - x_pos)) + 0.05 * abs(each->GetY() - y_pos) * weightByDistance; 
         cnt++;
-    }  
-    if (cnt)
-    {
-        x_pos = (x_pos > 0.5 * WINDOW_WIDTH) ?
-            WINDOW_WIDTH - x_pos : x_pos ;
-        eval += -0 * (1 / (0.1 + 0.1 * x_pos));
-    } 
-    else eval = 0.0;
+    }   
     return eval;
 }
 
@@ -516,11 +469,17 @@ double Dawnbreaker::evaluateBorder(GameWorld *world, State state)
 double Dawnbreaker::getEvaluation(State state)
 {
     auto world = get_world();
+    auto retval = 1 * evaluateBulletDirection(world, state) 
+                + 3 * evaluateEnemyDirection(world, state)
+                + 1 * evaluateEnemyDistance(world, 600, state);
+    /*auto world = get_world();
     auto retval = 10 * evaluateBulletDirection(world, state) 
                 + 0.1 * evaluateEnemyDistance(world, 600, state)
-                + 1 * evaluateBorder(world, state);
+                + 1 * evaluateBorder(world, state);*/
     return retval;
 }
+
+
 
 //Star
 Star::Star(int x, int y, double size, GameWorld* wrd):GameObject(IMGID_STAR,x,y,0,4,size,wrd){
@@ -544,10 +503,10 @@ B_bullet::B_bullet(int x, int y, double size, int dmg, GameWorld* wrd):GameObjec
 int B_bullet::get_dmg(){return damage;}
 void B_bullet::Update(){
     if(!jud_life())
-        return ;
+        return;
     if(GetY()>=WINDOW_HEIGHT){
         set_life(false);
-        return ;
+        return;
     }
     for(auto i:get_world()->get_ob()) {
         if((i)->gettype()==4||(i)->gettype()==5||(i)->gettype()==6) {
@@ -562,11 +521,14 @@ void B_bullet::Update(){
                     GameObject* e=new Explosion((i)->GetX(),(i)->GetY(),get_world());
                     get_world()->push(e);
                     if(i->gettype()==4)
+                        //get_world()->IncreaseScore(50);
                         get_world()->IncreaseScore(1);
                     else if(i->gettype()==5)
-                        get_world()->IncreaseScore(100);
+                        //get_world()->IncreaseScore(100);
+                        get_world()->IncreaseScore(1);
                     else if(i->gettype()==6)
-                        get_world()->IncreaseScore(200);
+                        //get_world()->IncreaseScore(200);
+                        get_world()->IncreaseScore(1);
                     if((i)->gettype()==5&&randInt(1,10)<=2){
                         GameObject* he=new Heal((i)->GetX(),(i)->GetY(),get_world());
                         get_world()->push(he);
@@ -582,7 +544,7 @@ void B_bullet::Update(){
                         }
                     }
                 }
-                return ;
+                return;
             }
         }
     }
@@ -600,11 +562,14 @@ void B_bullet::Update(){
                     GameObject* e=new Explosion((i)->GetX(),(i)->GetY(),get_world());
                     get_world()->push(e);
                     if(i->gettype()==4)
+                        //get_world()->IncreaseScore(50);
                         get_world()->IncreaseScore(1);
                     else if(i->gettype()==5)
-                        get_world()->IncreaseScore(100);
+                        //get_world()->IncreaseScore(100);
+                        get_world()->IncreaseScore(1);
                     else if(i->gettype()==6)
-                        get_world()->IncreaseScore(200);
+                        //get_world()->IncreaseScore(200);
+                        get_world()->IncreaseScore(1);
                     if((i)->gettype()==5&&randInt(1,10)<=2){
                         GameObject* he=new Heal((i)->GetX(),(i)->GetY(),get_world());
                         get_world()->push(he);
@@ -620,7 +585,7 @@ void B_bullet::Update(){
                         }
                     }
                 }
-                return ;
+                return;
             }
         }
     }
@@ -673,6 +638,7 @@ void Alphatron::Update(){
             get_world()->change_have_destroyed();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
+            //get_world()->IncreaseScore(50);
             get_world()->IncreaseScore(1);
             return ;
         }
@@ -736,6 +702,7 @@ void Alphatron::Update(){
             get_world()->change_have_destroyed();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
+            //get_world()->IncreaseScore(50);
             get_world()->IncreaseScore(1);
             return ;
         }
@@ -786,7 +753,8 @@ void Sigmatron::Update(){
             get_world()->change_raquire();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            get_world()->IncreaseScore(100);
+            //get_world()->IncreaseScore(100);
+            get_world()->IncreaseScore(1);
             if(randInt(1,10)<=2){
                 GameObject* he=new Heal(GetX(),GetY(),get_world());
                 get_world()->push(he);
@@ -845,7 +813,8 @@ void Sigmatron::Update(){
             get_world()->change_raquire();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            get_world()->IncreaseScore(100);
+            //get_world()->IncreaseScore(100);
+            get_world()->IncreaseScore(1);
             if(randInt(1,10)<=2){
                 GameObject* he=new Heal(GetX(),GetY(),get_world());
                 get_world()->push(he);
@@ -901,7 +870,8 @@ void Omegatron::Update(){
             get_world()->change_raquire();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            get_world()->IncreaseScore(200);
+            //get_world()->IncreaseScore(200);
+            get_world()->IncreaseScore(1);
             if(randInt(1,10)<=4){
                 if(randInt(1,10)<=8){
                     GameObject* po=new Power(GetX(),GetY(),get_world());
@@ -966,7 +936,8 @@ void Omegatron::Update(){
             get_world()->change_raquire();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            get_world()->IncreaseScore(200);
+            //get_world()->IncreaseScore(200);
+            get_world()->IncreaseScore(1);
             if(randInt(1,10)<=4){
                 if(randInt(1,10)<=8){
                     GameObject* po=new Power(GetX(),GetY(),get_world());

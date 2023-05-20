@@ -31,6 +31,8 @@ public:
 
   void change_have_destroyed();
 
+  GameWorld* copy_world(GameWorld* world);
+
 
 
 private:
