@@ -18,8 +18,8 @@ void GameWorld::Init() {
     double sz=((double)randInt(10,40))/100;
     object.push_back(new Star(x,y,sz,this));
   }
-  //require=3*GetLevel();
-  max_on=3;
+  require=3*GetLevel();
+  max_on= (5 + GetLevel()) / 2;
   on=0;
   have_destroyed=0;
 }
@@ -32,28 +32,23 @@ LevelStatus GameWorld::Update() {
     object.push_back(s);
   }
   if(on<max_on && randInt(1,100)<=(max_on-on)) {
-    int possible=randInt(1,3);
-    GameObject* p;
-    switch (possible)
-    {
-    case 1:
-      p=new Alphatron(randInt(0,WINDOW_WIDTH-1),WINDOW_HEIGHT-1,20+2*GetLevel(),4+GetLevel(),2+GetLevel()/5,this);
+    int p1=6;
+    int p2=2*std::max(GetLevel()-1,0);
+    int p3=3*std::max(GetLevel()-2,0);
+    int ram=randInt(1,p1+p2+p3);
+    if(ram<=p1){
+      GameObject* p=new Alphatron(randInt(0,WINDOW_WIDTH-1),WINDOW_HEIGHT-1,20+2*GetLevel(),4+GetLevel(),2+GetLevel()/5,this);
       object.push_back(p);
-      on++;
-      break;
-    /*case 2:
-      p=new Sigmatron(randInt(0,WINDOW_WIDTH-1),WINDOW_HEIGHT-1,25+5*GetLevel(),2+GetLevel()/5,this);
-      object.push_back(p);
-      on++;
-      break;
-    case 3:
-      p=new Omegatron(randInt(0,WINDOW_WIDTH-1),WINDOW_HEIGHT-1,20+GetLevel(),2+2*GetLevel(),3+GetLevel()/4,this);
-      object.push_back(p);
-      on++;
-      break;*/
-    default:
-      break;
     }
+    else if(ram>p1 && ram<=p1+p2){
+      GameObject* p=new Sigmatron(randInt(0,WINDOW_WIDTH-1),WINDOW_HEIGHT-1,25+5*GetLevel(),2+GetLevel()/5,this);
+      object.push_back(p);
+    }
+    else{
+      GameObject* p=new Omegatron(randInt(0,WINDOW_WIDTH-1),WINDOW_HEIGHT-1,20+GetLevel(),2+2*GetLevel(),3+GetLevel()/4,this);
+      object.push_back(p);
+    }
+    on++;
   }
   std::list <GameObject*>::iterator bg=object.begin();
   double result=(*bg)->evaluatefunction();
@@ -64,6 +59,10 @@ LevelStatus GameWorld::Update() {
       GameObject* b=new B_bullet((*i)->GetX(),(*i)->GetY()+50,0.5+0.1*(*i)->get_level(),5+3*(*i)->get_level(),this);
       object.push_back(b);
     }
+    if((*i)->jud_meteor(this, 1)){
+      GameObject* b=new Meteor((*i)->GetX(),(*i)->GetY()+100,this);
+      object.push_back(b);
+    }
   }
 
   if((*bg)->get_hp()<=0) {
@@ -71,8 +70,8 @@ LevelStatus GameWorld::Update() {
     return LevelStatus::DAWNBREAKER_DESTROYED;
   }
 
-  //if(require<=0)
-    //return LevelStatus::LEVEL_CLEARED;
+  if(require<=0)
+    return LevelStatus::LEVEL_CLEARED;
 
   for(std::list <GameObject*>::iterator i=object.begin();i!=object.end();)
   {

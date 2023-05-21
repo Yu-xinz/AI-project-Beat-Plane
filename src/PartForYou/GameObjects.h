@@ -3,12 +3,16 @@
 
 #include "ObjectBase.h"
 #include "GameWorld.h"
+#include <queue>
 
 /// @brief A state for Dawnbreaker
 typedef struct state {
-    double x_move;
-    double y_move;
-    double health;
+    int x_origin;
+    int y_origin;
+    int x_pos;
+    int y_pos;
+    int health;
+    int depth;
 } State;
 
 class GameWorld;
@@ -20,7 +24,7 @@ public:
     bool jud_life();
     virtual void set_move(int x1, int y1)=0;
     virtual bool jud_bullet(bool fire)=0;
-    virtual bool jud_meteor(bool fire2)=0;
+    virtual bool jud_meteor(GameWorld *world, bool fire2)=0;
     virtual int get_meteor(){return 0;}
     virtual void add_meteor(){}
     virtual int get_level(){return 0;}
@@ -32,7 +36,6 @@ public:
     virtual int get_depth(){return 0;};
     virtual void dodgebullet()=0;
     virtual void targetforalpha()=0;
-    virtual void Astar(GameWorld *world)=0;
     virtual void Reinforcement(GameWorld *world)=0;
     virtual void Q_iteration(GameWorld *world)=0;
     virtual double evaluatefunction();
@@ -56,7 +59,7 @@ public:
     virtual void Update();
     virtual void set_move(int x1,int y1);
     virtual bool jud_bullet(bool fire);
-    virtual bool jud_meteor(bool fire2);
+    virtual bool jud_meteor(GameWorld *world, bool fire2);
     virtual int get_meteor();
     virtual int get_level();
     virtual void add_level();
@@ -65,7 +68,6 @@ public:
     virtual void set_hp(int dg);
     virtual void dodgebullet();
     virtual void targetforalpha();
-    virtual void Astar(GameWorld *world);
     virtual void Reinforcement(GameWorld *world);
     virtual void Q_iteration(GameWorld *world);
     /* state space:
@@ -93,11 +95,15 @@ private:
     int x_move,y_move;
     int num_met,level;
     double Qtable[7][9];
-    double evaluateBulletDirection(GameWorld *world, State state);
-    double evaluateEnemyDirection(GameWorld *world, State state);
-    double evaluateEnemyDistance(GameWorld *world, double threshold, State state);
-    double evaluateBorder(GameWorld *world, State state);
-    double getEvaluation(State state);
+    void Astar(GameWorld *world, int depth);
+    int evaluateBulletDirection(GameWorld *world, State state);
+    int evaluateEnemyDirection(GameWorld *world, State state);
+    int evaluateEnemyDistance(GameWorld *world, double threshold, State state);
+    int evaluateBorder(GameWorld *world, State state);
+    int evaluateMove(State state);
+    int evaluatePosition(State state);
+    int evaluateGoodieDistance(GameWorld *world, State state);
+    int getEvaluation(State state);
 };
 
 
@@ -108,10 +114,9 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 };
@@ -124,11 +129,10 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual int get_dmg();
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 private:
@@ -143,13 +147,12 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual int get_hp();
     virtual void set_hp(int dg);
     virtual int get_dmg();
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 private:
@@ -166,12 +169,11 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual int get_hp();
     virtual void set_hp(int dg);
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 private:
@@ -187,13 +189,12 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual int get_hp();
     virtual void set_hp(int dg);
     virtual int get_dmg();
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 private:
@@ -210,11 +211,10 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual int get_dmg();
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 private:
@@ -229,10 +229,9 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 };
@@ -245,10 +244,9 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;} 
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 };
@@ -261,10 +259,9 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;} 
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 };
@@ -277,10 +274,9 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;} 
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 };
@@ -293,10 +289,9 @@ public:
     virtual void Update();
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;} 
-    virtual bool jud_meteor(bool fire2){return false;}
+    virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
-    virtual void Astar(GameWorld *world){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
 };
