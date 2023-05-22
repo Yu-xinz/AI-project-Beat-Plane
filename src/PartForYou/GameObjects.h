@@ -9,10 +9,10 @@
 typedef struct state {
     int x_origin;
     int y_origin;
-    int x_pos;
-    int y_pos;
-    int health;
-    int depth;
+    double x_pos;
+    double y_pos;
+    double health;
+    double depth;
 } State;
 
 class GameWorld;
@@ -29,7 +29,7 @@ public:
     virtual void add_meteor(){}
     virtual int get_level(){return 0;}
     virtual void add_level(){}
-    virtual int get_hp(){return 0;}
+    virtual double get_hp(){return 0;}
     virtual int get_dmg(){return 0;}
     virtual void set_hp(int dg){}
     virtual void set_depth(int dep){}
@@ -64,7 +64,7 @@ public:
     virtual int get_level();
     virtual void add_level();
     virtual void add_meteor();
-    virtual int get_hp();
+    virtual double get_hp();
     virtual void set_hp(int dg);
     virtual void dodgebullet();
     virtual void targetforalpha();
@@ -90,20 +90,19 @@ public:
             idle (0,0)          8
     */
 private:
-    int hp,energy;
-    int depth;
+    double hp,energy;
     int x_move,y_move;
     int num_met,level;
     double Qtable[7][9];
     void Astar(GameWorld *world, int depth);
-    int evaluateBulletDirection(GameWorld *world, State state);
-    int evaluateEnemyDirection(GameWorld *world, State state);
-    int evaluateEnemyDistance(GameWorld *world, double threshold, State state);
-    int evaluateBorder(GameWorld *world, State state);
-    int evaluateMove(State state);
-    int evaluatePosition(State state);
-    int evaluateGoodieDistance(GameWorld *world, State state);
-    int getEvaluation(State state);
+    double evaluateBulletDirection(GameWorld *world, State state);
+    double evaluateEnemyDirection(GameWorld *world, State state);
+    double evaluateEnemyDistance(GameWorld *world, double threshold, State state);
+    double evaluateBorder(GameWorld *world, State state);
+    double evaluateMove(State state);
+    double evaluatePosition(State state);
+    double evaluateGoodieDistance(GameWorld *world, State state);
+    double getEvaluation(State state);
 };
 
 
@@ -148,7 +147,7 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
     virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
-    virtual int get_hp();
+    virtual double get_hp();
     virtual void set_hp(int dg);
     virtual int get_dmg();
     virtual void dodgebullet(){return;}
@@ -170,7 +169,7 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
     virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
-    virtual int get_hp();
+    virtual double get_hp();
     virtual void set_hp(int dg);
     virtual void dodgebullet(){return;}
     virtual void targetforalpha(){return;}
@@ -190,7 +189,7 @@ public:
     virtual void set_move(int x1, int y1){}
     virtual bool jud_bullet(bool fire){return false;}
     virtual bool jud_meteor(GameWorld *world, bool fire2) {return false;};
-    virtual int get_hp();
+    virtual double get_hp();
     virtual void set_hp(int dg);
     virtual int get_dmg();
     virtual void dodgebullet(){return;}

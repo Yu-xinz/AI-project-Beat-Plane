@@ -3,8 +3,8 @@
 #ifndef M_PI
 #define M_PI 3.1415926
 #endif
-#define MAX_DISTANCE 1082
-const int SPEED = 6;
+#define MAX_DISTANCE 1082.0
+const double SPEED = 8.0;
 GameObject::GameObject(int imageID, int x, int y, int direction, int layer, double size, GameWorld* wrd):ObjectBase(imageID,x,y,direction,layer,size){
     world=wrd;
 }
@@ -86,11 +86,10 @@ Dawnbreaker::Dawnbreaker(GameWorld* wrd):GameObject(IMGID_DAWNBREAKER,300,300,0,
     level=0;
     set_life(true);
     settype(1);
-    depth=10;
 }
 
 void Dawnbreaker::Update(){
-    Astar(get_world(), 2);
+    Astar(get_world(), 3);
     if((GetX()+x_move*4)>=0&&(GetX()+x_move*4)<=(WINDOW_WIDTH-1))
         MoveTo(GetX()+x_move*SPEED,GetY());
     if((GetY()+y_move*4)>=50&&(GetY()+y_move*4)<=(WINDOW_HEIGHT-1))
@@ -132,7 +131,7 @@ int Dawnbreaker::get_level(){
 void Dawnbreaker::add_level(){level++;}
 int Dawnbreaker::get_meteor(){return num_met;}
 void Dawnbreaker::add_meteor(){num_met++;}
-int Dawnbreaker::get_hp(){return hp;}
+double Dawnbreaker::get_hp(){return hp;}
 void Dawnbreaker::set_hp(int dg){hp-=dg;}
 void Dawnbreaker::dodgebullet(){
     int min_x_distance=114514;
@@ -294,11 +293,11 @@ void Dawnbreaker::Astar(GameWorld *world, int depth){
         dodgebullet();
     }
     return;*/
-    float decay = 0.9;
-    std::vector<std::pair<int, State>> base_pq;
+    double decay = 0.9;
+    std::vector<std::pair<double, State>> base_pq;
     auto cmp = [](
-        std::pair<int, State> l, 
-        std::pair<int, State> r
+        std::pair<double, State> l, 
+        std::pair<double, State> r
         ) 
         { 
             //std::cout << l.first << " " << r.first << std::endl;
@@ -309,11 +308,11 @@ void Dawnbreaker::Astar(GameWorld *world, int depth){
     for(int i=-1;i<=1;i++){
         for(int j=-1;j<=1;j++){
             State state{i, j, GetX() + i*SPEED, GetY() + j*SPEED, get_hp(), 1};
-            int eval = getEvaluation(state);
+            double eval = getEvaluation(state);
             if (eval < -9999999)
                 continue;
             //std::cout << "eval = " << eval << " i " << i << " j " << j << std::endl;
-            std::pair<int, State> temp(eval, state);
+            std::pair<double, State> temp(eval, state);
             //< do not act when nothing get considered (eval == 0)
             if (
                 GetX() + i*SPEED > WINDOW_WIDTH - 2*SPEED
@@ -338,10 +337,10 @@ void Dawnbreaker::Astar(GameWorld *world, int depth){
             //std::cout << x_move << " " << y_move << std::endl;
             x_move = top.x_origin;
             y_move = top.y_origin;
-            std::cout << "Utimate eval: " << top_eval 
-                << " x,y: " << GetX() + x_move*SPEED << " " << GetY() + y_move*SPEED 
-                << std::endl
-                << std::endl; 
+            //std::cout << "Utimate eval: " << top_eval 
+            //    << " x,y: " << GetX() + x_move*SPEED << " " << GetY() + y_move*SPEED 
+            //    << std::endl
+            //    << std::endl; 
             break;
         }
         if (top.depth < depth)
@@ -367,17 +366,10 @@ void Dawnbreaker::Astar(GameWorld *world, int depth){
                         && evaluateGoodieDistance(world, state) == 0
                     )
                         continue;
-                    int eval = 0;
-                    auto top_eval_tmp = 0;
-                    for (int p=0; p< top.depth; p++)
-                        for (int q=3; q< 4; q++)
-                            top_eval_tmp += (top_eval_tmp >> q);
-                    auto eval_tmp = getEvaluation(state) + top_eval_tmp;
-                    if (eval_tmp < -9999999)
+                    auto eval = getEvaluation(state) + top_eval;
+                    if (eval < -9999999)
                         continue;
-                    for (int p=0; p< top.depth; p++)
-                        for (int q=1; q< 3; q++)
-                            eval += (eval_tmp >> q);
+                    eval *= decay;
                     std::pair<double, State> temp(eval, state);
                     pq.push(temp);
                     // std::cout << "eval = " << eval << " i " << i << " j " << j << " origin " << top.y_origin << std::endl;
@@ -448,27 +440,28 @@ void Dawnbreaker::Reinforcement(GameWorld *world){
 /// @param world
 /// @param state description
 /// @return evaluation 
-int Dawnbreaker::evaluateBulletDirection(GameWorld *world, State state)
+double Dawnbreaker::evaluateBulletDirection(GameWorld *world, State state)
 {
-    int eval = 0;
+    double eval = 0;
     double tmp;
     double weightByDistance;
     auto objects = world->get_ob();
     auto x_pos = state.x_pos;
     auto y_pos = state.y_pos;
+    double depth = state.depth;
     int cnt = 0;
     for (auto each : objects)
     {
         if (each->gettype() != 7) /**< not a bullet*/
             continue;
-        int bulletX = each->GetX();
-        int bulletY = each->GetY(); 
+        double bulletX = each->GetX();
+        double bulletY = each->GetY(); 
         if (track(
             bulletX, x_pos, bulletY, y_pos, 
-            (1 + 0.5 * state.depth) * each->GetSize(), (1 + 0.5 * state.depth) * GetSize()
+            (1+ 0.3 * depth) * each->GetSize(), (1 + 0.3 * depth) * GetSize()
         ))
         {
-            eval = -99999999;
+            eval = -999999.0;
             break;
         }
         double eucDis = pow((each->GetX() - x_pos)*(each->GetX() - x_pos) + (each->GetY() - y_pos)*(each->GetY() - y_pos), 0.5);
@@ -476,6 +469,7 @@ int Dawnbreaker::evaluateBulletDirection(GameWorld *world, State state)
         if (eucDis > 0.25 * WINDOW_HEIGHT)
         {
             dot = 0.75;
+            weightByDistance = 1.0;
         }
         else {
             auto vecDisX = (x_pos - each->GetX()) / (1+eucDis); 
@@ -484,11 +478,11 @@ int Dawnbreaker::evaluateBulletDirection(GameWorld *world, State state)
             double bulletDirectionY = sin((90 - each->GetDirection()) * M_PI / 180);
             //std::cout << "Bullet: (" << bulletDirectionX << "," << bulletDirectionY << ")" << "  Position: (" << each->GetX() << "," << each->GetY() << ")" << " Direction: " << each->GetDirection() << std::endl << std::endl;
             dot = (vecDisX * bulletDirectionX) + (vecDisY * bulletDirectionY);
+            weightByDistance = 1.0 + ((0.25 * WINDOW_HEIGHT) - eucDis)/(0.25 * WINDOW_HEIGHT);
             //std::cout << "Dot: " << dot << "  Position: (" << x_pos << "," << y_pos << ")" << " vec: " <<vecDisX << ","<< vecDisY<< std::endl << std::endl;
         }
         //eval += std::max(0.3 * WINDOW_HEIGHT, eucDis) - MAX_DISTANCE;
         //eval += -1000000 / std::max(0.3 * WINDOW_HEIGHT, eucDis); 
-        weightByDistance = 1 + (MAX_DISTANCE - 10 * weightByDistance) / (MAX_DISTANCE);
         eval += (-(1000 * dot) - 1000)*weightByDistance;
         cnt++;
     }   
@@ -500,9 +494,9 @@ int Dawnbreaker::evaluateBulletDirection(GameWorld *world, State state)
 /// @param world 
 /// @param state 
 /// @return evaluation
-int Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
+double Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
 {
-    int eval = 0.0;
+    double eval = 0.0;
     double weightByDistance;
     auto objects = world->get_ob();
     auto x_pos = state.x_pos;
@@ -513,15 +507,14 @@ int Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
         
         if (each->gettype() != 4 && each->gettype() != 5 && each->gettype() != 6) /**< not a bullet*/
             continue;
-        int bulletX = each->GetX();
-        int bulletY = each->GetY(); 
-
+        auto bulletX = each->GetX();
+        auto bulletY = each->GetY(); 
         if (track(
             bulletX, x_pos, bulletY, y_pos, 
-            (2.5 * state.depth) * each->GetSize(), 2.5 * GetSize()
+            (1 * state.depth) * each->GetSize(), (1 * state.depth)* GetSize()
         ))
         {
-            eval = -99999999;
+            eval = -999999.0;
             break;
         }
 
@@ -530,6 +523,7 @@ int Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
         if (eucDis > 0.4 * WINDOW_HEIGHT)
         {
             dot = 0.75; //<maximum punishment
+            weightByDistance = 1.0;
         }
         else {
             auto vecDisX = (x_pos - each->GetX()) / (1+eucDis); 
@@ -537,10 +531,11 @@ int Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
             auto bulletDirectionX = cos((90 - each->GetDirection()) * M_PI / 180);
             auto bulletDirectionY = sin((90 - each->GetDirection()) * M_PI / 180);
             dot = vecDisX * bulletDirectionX + vecDisY * bulletDirectionY;
+            weightByDistance = 1.0 + ((0.4 * WINDOW_HEIGHT) - eucDis)/(0.4 * WINDOW_HEIGHT);
         }
         //eval += 100 * (std::max(0.3 * WINDOW_HEIGHT, eucDis) - MAX_DISTANCE);
         //eval += -200000 / std::max(0.3 * WINDOW_HEIGHT, eucDis); 
-        weightByDistance = 1 + (MAX_DISTANCE - 5 * weightByDistance) / (MAX_DISTANCE);
+        weightByDistance = 1.0;
         eval += (-(1000 * dot) - 1000)*weightByDistance;
         //std::cout << "Dot: " << eval << "  Position: (" << vecDisX << "," << vecDisY << ")" << std::endl;
         cnt++;
@@ -551,10 +546,10 @@ int Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
 /// @brief Get an *WEIGHTED* evaluation based on the X distances between
 /// @param world, threshold
 /// @return 
-int Dawnbreaker::evaluateEnemyDistance(GameWorld *world, double threshold, State state)
+double Dawnbreaker::evaluateEnemyDistance(GameWorld *world, double threshold, State state)
 {
-    int eval = 0;
-    int eval_tmp = 0;
+    double eval = 0;
+    double eval_tmp = 0;
     auto objects = world->get_ob();
     auto x_pos = state.x_pos;
     auto y_pos = state.y_pos;
@@ -562,9 +557,19 @@ int Dawnbreaker::evaluateEnemyDistance(GameWorld *world, double threshold, State
     int cnt = 0;
     for (auto each : objects)
     {
-        if (each->gettype() != 4 & each->gettype() != 5 & each->gettype() != 6) //< not an enemy
+        if (each->gettype() != 4  & each->gettype() != 6) //< not an enemy
             continue;
-        weightByDistance = 1 - (WINDOW_HEIGHT - 4 * weightByDistance) / (WINDOW_HEIGHT);
+        auto bulletX = each->GetX();
+        auto bulletY = each->GetY(); 
+        double eucDis = pow((bulletX - x_pos)*(bulletX- x_pos) + (bulletY - y_pos)*(bulletY - y_pos), 0.5);
+        if (eucDis < 0.35 * WINDOW_HEIGHT)
+        {
+            weightByDistance = -1;
+        }
+        else
+        {
+            weightByDistance = 1.0 + (eucDis)/(WINDOW_HEIGHT);
+        }
         eval_tmp =  weightByDistance * 100000/(1 + abs(each->GetX() - x_pos));
         eval = eval > eval_tmp ? eval: eval_tmp;
         cnt++;
@@ -577,7 +582,7 @@ int Dawnbreaker::evaluateEnemyDistance(GameWorld *world, double threshold, State
 /// @param world 
 /// @param state 
 /// @return 
-int Dawnbreaker::evaluateBorder(GameWorld *world, State state)
+double Dawnbreaker::evaluateBorder(GameWorld *world, State state)
 {
     auto x_pos = state.x_pos;
     auto y_pos = state.y_pos;
@@ -592,22 +597,28 @@ int Dawnbreaker::evaluateBorder(GameWorld *world, State state)
     return 0.0;
 }
 
-int Dawnbreaker::evaluateMove(State state)
+double Dawnbreaker::evaluateMove(State state)
 {
     if (state.x_origin != 0 || state.y_origin != 0)
-        return -1;
-    return 0;
+        return -1.0;
+    return 0.0;
 }
 
-int Dawnbreaker::evaluatePosition(State state)
+double Dawnbreaker::evaluatePosition(State state)
 {
-    return -10000000 / (1 + (WINDOW_HEIGHT - state.y_pos) * (WINDOW_HEIGHT - state.y_pos));
+    auto x_dist = state.x_pos > 0.5 * WINDOW_WIDTH? 
+                    WINDOW_WIDTH - state.x_pos:
+                    state.x_pos;
+    auto eval = 
+        - 10000000 / (1 + (WINDOW_HEIGHT - state.y_pos) * (WINDOW_HEIGHT - state.y_pos))
+        - 10000 / x_dist * x_dist;
+    return eval;
 }
 
-int Dawnbreaker::evaluateGoodieDistance(GameWorld *world, State state)
+double Dawnbreaker::evaluateGoodieDistance(GameWorld *world, State state)
 {
-    int eval = 0;
-    int eval_tmp = 0;
+    double eval = 0;
+    double eval_tmp = 0;
     auto objects = world->get_ob();
     auto x_pos = state.x_pos;
     auto y_pos = state.y_pos;
@@ -624,7 +635,7 @@ int Dawnbreaker::evaluateGoodieDistance(GameWorld *world, State state)
 }
 /// @brief 
 /// @return retval:double
-int Dawnbreaker::getEvaluation(State state)
+double Dawnbreaker::getEvaluation(State state)
 {
     auto world = get_world();
     auto bullet = evaluateBulletDirection(world, state); 
@@ -634,23 +645,23 @@ int Dawnbreaker::getEvaluation(State state)
     auto move = evaluateMove(state);
     auto position = evaluatePosition(state);
     auto goodie = evaluateGoodieDistance(world, state);
-    auto retval = 20 * bullet
-                + 5 * enemy1
-                + 100 * enemy2
+    auto retval = 100 * bullet
+                + 10 * enemy1
+                + 1 * enemy2
                 + 10 * border
                 + 10 * move
                 + 3 * position
                 + 2000 * goodie;
 
     
-    std::cout << "| "   << bullet 
-                << " | "<< enemy1
-                << " | "<< enemy2
-                << " | "<< border
-                << " | "<< move
-                << " | "<< position
-                << " | "<< goodie
-                <<std::endl;
+    //std::cout << "| "   << bullet 
+    //            << " | "<< enemy1
+    //            << " | "<< enemy2
+    //            << " | "<< border
+    //            << " | "<< move
+    //            << " | "<< position
+    //            << " | "<< goodie
+    //            <<std::endl;
     
     /*
     auto retval = 10 * evaluateBulletDirection(world, state) 
@@ -703,14 +714,14 @@ void B_bullet::Update(){
                     GameObject* e=new Explosion((i)->GetX(),(i)->GetY(),get_world());
                     get_world()->push(e);
                     if(i->gettype()==4)
-                        //get_world()->IncreaseScore(50);
-                        get_world()->IncreaseScore(1);
+                        get_world()->IncreaseScore(50);
+                        //get_world()->IncreaseScore(1);
                     else if(i->gettype()==5)
-                        //get_world()->IncreaseScore(100);
-                        get_world()->IncreaseScore(1);
+                        get_world()->IncreaseScore(100);
+                        //get_world()->IncreaseScore(1);
                     else if(i->gettype()==6)
-                        //get_world()->IncreaseScore(200);
-                        get_world()->IncreaseScore(1);
+                        get_world()->IncreaseScore(200);
+                        //get_world()->IncreaseScore(1);
                     if((i)->gettype()==5&&randInt(1,10)<=2){
                         GameObject* he=new Heal((i)->GetX(),(i)->GetY(),get_world());
                         get_world()->push(he);
@@ -744,14 +755,14 @@ void B_bullet::Update(){
                     GameObject* e=new Explosion((i)->GetX(),(i)->GetY(),get_world());
                     get_world()->push(e);
                     if(i->gettype()==4)
-                        //get_world()->IncreaseScore(50);
-                        get_world()->IncreaseScore(1);
+                        get_world()->IncreaseScore(50);
+                        //get_world()->IncreaseScore(1);
                     else if(i->gettype()==5)
-                        //get_world()->IncreaseScore(100);
-                        get_world()->IncreaseScore(1);
+                        get_world()->IncreaseScore(100);
+                        //get_world()->IncreaseScore(1);
                     else if(i->gettype()==6)
-                        //get_world()->IncreaseScore(200);
-                        get_world()->IncreaseScore(1);
+                        get_world()->IncreaseScore(200);
+                        //get_world()->IncreaseScore(1);
                     if((i)->gettype()==5&&randInt(1,10)<=2){
                         GameObject* he=new Heal((i)->GetX(),(i)->GetY(),get_world());
                         get_world()->push(he);
@@ -785,7 +796,7 @@ Alphatron::Alphatron(int x, int y,int hp0,int dmg,int spd,GameWorld* wrd):GameOb
     set_life(true);
     settype(4);
 }
-int Alphatron::get_hp(){return hp;}
+double Alphatron::get_hp(){return hp;}
 void Alphatron::set_hp(int dg){hp-=dg;}
 int Alphatron::get_dmg(){return damage;}
 void Alphatron::Update(){
@@ -820,8 +831,8 @@ void Alphatron::Update(){
             get_world()->change_have_destroyed();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            //get_world()->IncreaseScore(50);
-            get_world()->IncreaseScore(1);
+            get_world()->IncreaseScore(50);
+            //get_world()->IncreaseScore(1);
             return ;
         }
     }
@@ -884,8 +895,8 @@ void Alphatron::Update(){
             get_world()->change_have_destroyed();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            //get_world()->IncreaseScore(50);
-            get_world()->IncreaseScore(1);
+            get_world()->IncreaseScore(50);
+            //get_world()->IncreaseScore(1);
             return ;
         }
     }
@@ -902,7 +913,7 @@ Sigmatron::Sigmatron(int x, int y, int hp0,int spd,GameWorld* wrd):GameObject(IM
     set_life(true);
     settype(5);
 }
-int Sigmatron::get_hp(){return hp;}
+double Sigmatron::get_hp(){return hp;}
 void Sigmatron::set_hp(int dg){hp-=dg;}
 void Sigmatron::Update(){
     if(!jud_life())
@@ -935,8 +946,8 @@ void Sigmatron::Update(){
             get_world()->change_raquire();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            //get_world()->IncreaseScore(100);
-            get_world()->IncreaseScore(1);
+            get_world()->IncreaseScore(100);
+            //get_world()->IncreaseScore(1);
             if(randInt(1,10)<=2){
                 GameObject* he=new Heal(GetX(),GetY(),get_world());
                 get_world()->push(he);
@@ -995,8 +1006,8 @@ void Sigmatron::Update(){
             get_world()->change_raquire();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            //get_world()->IncreaseScore(100);
-            get_world()->IncreaseScore(1);
+            get_world()->IncreaseScore(100);
+            //get_world()->IncreaseScore(1);
             if(randInt(1,10)<=2){
                 GameObject* he=new Heal(GetX(),GetY(),get_world());
                 get_world()->push(he);
@@ -1018,7 +1029,7 @@ Omegatron::Omegatron(int x, int y, int hp0,int dmg,int spd,GameWorld* wrd):GameO
     set_life(true);
     settype(6);
 }
-int Omegatron::get_hp(){return hp;}
+double Omegatron::get_hp(){return hp;}
 void Omegatron::set_hp(int dg){hp-=dg;}
 int Omegatron::get_dmg(){return damage;}
 void Omegatron::Update(){
@@ -1052,8 +1063,8 @@ void Omegatron::Update(){
             get_world()->change_raquire();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            //get_world()->IncreaseScore(200);
-            get_world()->IncreaseScore(1);
+            get_world()->IncreaseScore(200);
+            //get_world()->IncreaseScore(1);
             if(randInt(1,10)<=4){
                 if(randInt(1,10)<=8){
                     GameObject* po=new Power(GetX(),GetY(),get_world());
@@ -1118,8 +1129,8 @@ void Omegatron::Update(){
             get_world()->change_raquire();
             GameObject* e=new Explosion(GetX(),GetY(),get_world());
             get_world()->push(e);
-            //get_world()->IncreaseScore(200);
-            get_world()->IncreaseScore(1);
+            get_world()->IncreaseScore(200);
+            //get_world()->IncreaseScore(1);
             if(randInt(1,10)<=4){
                 if(randInt(1,10)<=8){
                     GameObject* po=new Power(GetX(),GetY(),get_world());
