@@ -2,7 +2,7 @@
 #include <cstring>
 
 GameWorld::GameWorld() {
-  love=5;
+  love=3;
 }
 
 GameWorld::~GameWorld() {

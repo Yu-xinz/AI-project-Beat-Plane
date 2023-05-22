@@ -1,9 +1,13 @@
+
 #ifndef GAMEOBJECTS_H__
 #define GAMEOBJECTS_H__
 
 #include "ObjectBase.h"
 #include "GameWorld.h"
+#include "json.h"
 #include <queue>
+#include <fstream>
+#include <sstream>
 
 /// @brief A state for Dawnbreaker
 typedef struct state {
@@ -103,6 +107,7 @@ private:
     double evaluatePosition(State state);
     double evaluateGoodieDistance(GameWorld *world, State state);
     double getEvaluation(State state);
+    bool writeTrainingData(GameWorld *world);
 };
 
 

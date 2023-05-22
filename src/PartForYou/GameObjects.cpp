@@ -1,10 +1,13 @@
 #include "GameObjects.h"
 #include <cmath>
+#include <ctime>
 #ifndef M_PI
 #define M_PI 3.1415926
 #endif
 #define MAX_DISTANCE 1082.0
 const double SPEED = 8.0;
+const time_t now = time(0);
+
 GameObject::GameObject(int imageID, int x, int y, int direction, int layer, double size, GameWorld* wrd):ObjectBase(imageID,x,y,direction,layer,size){
     world=wrd;
 }
@@ -89,6 +92,7 @@ Dawnbreaker::Dawnbreaker(GameWorld* wrd):GameObject(IMGID_DAWNBREAKER,300,300,0,
 }
 
 void Dawnbreaker::Update(){
+    writeTrainingData(get_world());
     Astar(get_world(), 3);
     if((GetX()+x_move*4)>=0&&(GetX()+x_move*4)<=(WINDOW_WIDTH-1))
         MoveTo(GetX()+x_move*SPEED,GetY());
@@ -284,6 +288,9 @@ void Dawnbreaker::targetforalpha(){
         y_move=1;
     }
 }
+/// @brief An astar search to find the path with maximum value in `depth` steps
+/// @param world a pointer to the gameworld
+/// @param depth >= 1, the depth of astar search 
 void Dawnbreaker::Astar(GameWorld *world, int depth){
     /*double result=evaluatefunction();
     if(result > get_world()->GetScore()){
@@ -483,7 +490,7 @@ double Dawnbreaker::evaluateBulletDirection(GameWorld *world, State state)
         }
         //eval += std::max(0.3 * WINDOW_HEIGHT, eucDis) - MAX_DISTANCE;
         //eval += -1000000 / std::max(0.3 * WINDOW_HEIGHT, eucDis); 
-        eval += (-(1000 * dot) - 1000)*weightByDistance;
+        eval += (-(1000 * dot) - 1000) * weightByDistance;
         cnt++;
     }   
     // if(eval)    std::cout << "Eval: " << eval << std::endl;
@@ -672,7 +679,62 @@ double Dawnbreaker::getEvaluation(State state)
     return retval;
 }
 
+bool Dawnbreaker::writeTrainingData(GameWorld *world)
+{
+    Json::FastWriter writer;
+    Json::Value state;
 
+    Json::Value move;
+    move["x"] = x_move;
+    move["y"] = y_move;
+    state["move"] = move;
+
+    Json::Value position;
+    position["x"] = GetY();
+    position["y"] = GetY();
+    state["position"] = position;
+
+    Json::Value HP = get_hp();
+    state["hp"] = HP;
+
+    Json::Value score = world->GetScore();
+    state["score"] = score;
+
+    Json::Value level = world->GetLevel();
+    state["level"] = get_level();
+
+    Json::Value objects_array;
+    Json::Value objectValue;
+    auto objects = world->get_ob();
+    int cnt = 0;
+    for (auto each: objects)
+    {
+        if (
+            each->gettype() == 4
+            || each->gettype() == 5
+            || each->gettype() == 6
+            || each->gettype() == 7
+            || each->gettype() == 8
+            || each->gettype() == 9
+            || each->gettype() == 12)
+        {
+            objectValue[0] = each->gettype();
+            objectValue[1] = each->GetX();
+            objectValue[2] = each->GetY();
+            objects_array[cnt] = objectValue;
+            cnt++;   
+        }
+    } 
+    state["objects"] = objects_array;
+
+    std::string json_file = writer.write(state);
+    std::ofstream outfile;
+    outfile.open("../../../data/" + std::to_string(now) +".json", std::ios::app);
+    outfile << json_file;
+    outfile << ",";
+    outfile.close();
+    return true;
+}
 
 //Star
 Star::Star(int x, int y, double size, GameWorld* wrd):GameObject(IMGID_STAR,x,y,0,4,size,wrd){

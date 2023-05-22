@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
+set(DCMAKE_TOOLCHAIN_FILE "C:/Users/Huaqiu Wang/vcpkg/scripts/buildsystems/vcpkg.cmake")
 set(PROJECT_NAME "Dawnbreaker")
 project(${PROJECT_NAME})
 
@@ -36,6 +37,7 @@ ENDIF()
 add_library(
   ProvidedFramework
   STATIC
+  src/ProvidedFramework/json.h
   src/ProvidedFramework/ObjectBase.h
   src/ProvidedFramework/ObjectBase.cpp
   src/ProvidedFramework/WorldBase.h
@@ -101,90 +103,6 @@ target_include_directories(
   src/
   src/ProvidedFramework/
   src/PartForYou/
-)
-
-add_library(
-  part1
-  STATIC
-  src/part1/a.h
-  src/part1/a.cpp
-  src/utils.h
-)
-
-target_link_libraries(
-  part1
-  ProvidedFramework
-)
-
-target_include_directories(
-  part1
-  PUBLIC 
-  src/
-  src/ProvidedFramework/
-  src/part1/
-)
-
-add_library(
-  part2
-  STATIC
-  src/part2/b.h
-  src/part2/b.cpp
-  src/utils.h
-)
-
-target_link_libraries(
-  part2
-  ProvidedFramework
-)
-
-target_include_directories(
-  part2
-  PUBLIC 
-  src/
-  src/ProvidedFramework/
-  src/part2/
-)
-
-add_library(
-  part3
-  STATIC
-  src/part3/c.h
-  src/part3/c.cpp
-  src/utils.h
-)
-
-target_link_libraries(
-  part3
-  ProvidedFramework
-)
-
-target_include_directories(
-  part3
-  PUBLIC 
-  src/
-  src/ProvidedFramework/
-  src/part3/
-)
-
-add_library(
-  part4
-  STATIC
-  src/part4/d.h
-  src/part4/d.cpp
-  src/utils.h
-)
-
-target_link_libraries(
-  part4
-  ProvidedFramework
-)
-
-target_include_directories(
-  part4
-  PUBLIC 
-  src/
-  src/ProvidedFramework/
-  src/part4/
 )
 
 add_executable(
