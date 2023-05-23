@@ -92,12 +92,17 @@ Dawnbreaker::Dawnbreaker(GameWorld* wrd):GameObject(IMGID_DAWNBREAKER,300,300,0,
 }
 
 void Dawnbreaker::Update(){
-    writeTrainingData(get_world());
-    Astar(get_world(), 3);
-    if((GetX()+x_move*4)>=0&&(GetX()+x_move*4)<=(WINDOW_WIDTH-1))
-        MoveTo(GetX()+x_move*SPEED,GetY());
-    if((GetY()+y_move*4)>=50&&(GetY()+y_move*4)<=(WINDOW_HEIGHT-1))
-        MoveTo(GetX(),GetY()+y_move*SPEED); 
+    if(!cnt)
+    {
+         writeTrainingData(get_world());
+        Astar(get_world(), 3);
+        if((GetX()+x_move*4)>=0&&(GetX()+x_move*4)<=(WINDOW_WIDTH-1))
+            MoveTo(GetX()+x_move*SPEED,GetY());
+        if((GetY()+y_move*4)>=50&&(GetY()+y_move*4)<=(WINDOW_HEIGHT-1))
+            MoveTo(GetX(),GetY()+y_move*SPEED); 
+    }
+    cnt ++;
+    cnt %= 1;
 }
 void Dawnbreaker::set_move(int x1, int y1){x_move=x1;y_move=y1;}
 bool Dawnbreaker::jud_bullet(bool fire){
@@ -262,6 +267,7 @@ void Dawnbreaker::targetforalpha(){
         x_move=-1;
         if(dawnposx-4<0)
             x_move=1;
+    }
     if(rl==false){ //turn right
         x_move=1;
         if(dawnposx+4>(WINDOW_WIDTH-1))
@@ -534,8 +540,26 @@ double Dawnbreaker::evaluateEnemyDirection(GameWorld *world, State state)
         else {
             auto vecDisX = (x_pos - each->GetX()) / (1+eucDis); 
             auto vecDisY = (y_pos - each->GetY()) / (1+eucDis);
-            auto bulletDirectionX = cos((90 - each->GetDirection()) * M_PI / 180);
-            auto bulletDirectionY = sin((90 - each->GetDirection()) * M_PI / 180);
+            auto bulletDirectionX = 0.0;
+            auto bulletDirectionY = 0.0;
+            switch (each->get_move_dir())
+            {
+            case 1:
+                bulletDirectionX = cos((90 - 180 ) * M_PI / 180);
+                bulletDirectionY = sin((90 - 180 ) * M_PI / 180);
+                break;
+            case 2:
+                bulletDirectionX = cos((90 - 162 ) * M_PI / 180);
+                bulletDirectionY = sin((90 - 162 ) * M_PI / 180);
+                break;
+            case 3:
+                bulletDirectionX = cos((90 - 198 ) * M_PI / 180);
+                bulletDirectionY = sin((90 - 198 ) * M_PI / 180);
+                break;
+            default:
+                break;
+            }
+                
             dot = vecDisX * bulletDirectionX + vecDisY * bulletDirectionY;
             weightByDistance = 1.0 + ((0.4 * WINDOW_HEIGHT) - eucDis)/(0.4 * WINDOW_HEIGHT);
         }
@@ -568,14 +592,7 @@ double Dawnbreaker::evaluateEnemyDistance(GameWorld *world, double threshold, St
         auto bulletX = each->GetX();
         auto bulletY = each->GetY(); 
         double eucDis = pow((bulletX - x_pos)*(bulletX- x_pos) + (bulletY - y_pos)*(bulletY - y_pos), 0.5);
-        if (eucDis < 0.35 * WINDOW_HEIGHT)
-        {
-            weightByDistance = -1;
-        }
-        else
-        {
-            weightByDistance = 1.0 + (eucDis)/(WINDOW_HEIGHT);
-        }
+        weightByDistance = 1.0 - (0.6 * WINDOW_HEIGHT - eucDis)/(WINDOW_HEIGHT);
         eval_tmp =  weightByDistance * 100000/(1 + abs(each->GetX() - x_pos));
         eval = eval > eval_tmp ? eval: eval_tmp;
         cnt++;
@@ -735,68 +752,6 @@ bool Dawnbreaker::writeTrainingData(GameWorld *world)
     return true;
 }
 
-State Dawnbreaker::stateInit(GameWorld *world)
-{
-    ObjectList objects;
-    auto objects = world->get_obs();
-    for (auto each: objects)
-    {
-	if (
-            each->gettype() == 4
-	    || each -> gettype() == 5
-	    || each -> gettype() == 6
-	    || each -> gettype() == 7
-	    || each -> gettype() == 8
-	    || each -> gettype() == 9
-	    || each -> gettype() == 12
-	)
-        ObjectStatus status = {
-            each->gettype();
-	    each->GetX();
-	    each->GetY();
-	}
-	objects.push_back(status); 
-    }
-    int x_origin = 0;
-    int y_origin = 0;
-    double x_pos = GetX();
-    double y_pos = GetY();
-    double health = gethp();
-    int depth = 0;
-    State ret = {
-       x_origin, y_origin,
-       x_pos, y_pos,
-       health, depth,
-       objects
-    }
-    return ret;
-}
-
-bool Dawnbreaker::stateUpdate(GameWorld *world, State *state)
-{
-    ObjectList objects;
-    auto objects = state -> objects;
-    for (auto each: objects)
-    {
-	if (
-            each->type == 4
-	    || each->type  == 5
-	    || each->type  == 6
-	    || each->type  == 7
-	    || each->type  == 8
-	    || each->type  == 9
-	    || each->type  == 12
-	)
-	{
-            ObjectStatus status = {
-                each->type;
-	        each->x_pos;
-	        each->y_pos;
-	    }
-	    objects.push_back(status);
-	}
-    }
-}
 //Star
 Star::Star(int x, int y, double size, GameWorld* wrd):GameObject(IMGID_STAR,x,y,0,4,size,wrd){
     set_life(true);

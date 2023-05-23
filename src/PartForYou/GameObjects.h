@@ -9,9 +9,6 @@
 #include <fstream>
 #include <sstream>
 
-typedef std::tuple<int, double, double> ObjectStatus;
-typedef std::vector<ObjectStatus> ObjectList;
-
 /// @brief A state for Dawnbreaker
 typedef struct state {
     int x_origin;
@@ -20,7 +17,6 @@ typedef struct state {
     double y_pos;
     double health;
     double depth;
-    ObjectList objects;
 } State;
 
 class GameWorld;
@@ -39,6 +35,7 @@ public:
     virtual void add_level(){}
     virtual double get_hp(){return 0;}
     virtual int get_dmg(){return 0;}
+    virtual int get_move_dir()=0;
     virtual void set_hp(int dg){}
     virtual void set_depth(int dep){}
     virtual int get_depth(){return 0;};
@@ -78,6 +75,7 @@ public:
     virtual void targetforalpha();
     virtual void Reinforcement(GameWorld *world);
     virtual void Q_iteration(GameWorld *world);
+    virtual int get_move_dir(){return 0;};
     /* state space:
             start                                                   0
             crashed by bullet                                       1
@@ -102,6 +100,7 @@ private:
     int x_move,y_move;
     int num_met,level;
     double Qtable[7][9];
+    int cnt;
     void Astar(GameWorld *world, int depth);
     double evaluateBulletDirection(GameWorld *world, State state);
     double evaluateEnemyDirection(GameWorld *world, State state);
@@ -112,8 +111,6 @@ private:
     double evaluateGoodieDistance(GameWorld *world, State state);
     double getEvaluation(State state);
     bool writeTrainingData(GameWorld *world);
-    bool stateUpdate(GameWorld *world, *State state);
-    State stateInit(GameWorld *world);
 };
 
 
@@ -129,6 +126,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return 0;};
 };
 
 
@@ -145,6 +143,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return 0;};
 private:
     int damage;
 };
@@ -165,6 +164,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return move_dir;};
 private:
     int hp,energy;
     int damage,speed; //speed=2
@@ -186,6 +186,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return move_dir;};
 private:
     int hp,speed;
     int time,move_dir;
@@ -207,6 +208,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return move_dir;};
 private:
     int hp,energy;
     int damage,speed;
@@ -227,6 +229,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return 0;};
 private:
     int damage;
 };
@@ -244,6 +247,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return 0;};
 };
 
 
@@ -259,6 +263,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return 0;};
 };
 
 
@@ -274,6 +279,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return 0;};
 };
 
 
@@ -289,6 +295,7 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return 0;};
 };
 
 
@@ -304,5 +311,6 @@ public:
     virtual void targetforalpha(){return;}
     virtual void Reinforcement(GameWorld *world){return;}
     virtual void Q_iteration(GameWorld *world){return;}
+    virtual int get_move_dir(){return 0;};
 };
 #endif // GAMEOBJECTS_H__
