@@ -9,6 +9,9 @@
 #include <fstream>
 #include <sstream>
 
+typedef std::tuple<int, double, double> ObjectStatus;
+typedef std::vector<ObjectStatus> ObjectList;
+
 /// @brief A state for Dawnbreaker
 typedef struct state {
     int x_origin;
@@ -17,6 +20,7 @@ typedef struct state {
     double y_pos;
     double health;
     double depth;
+    ObjectList objects;
 } State;
 
 class GameWorld;
@@ -108,6 +112,8 @@ private:
     double evaluateGoodieDistance(GameWorld *world, State state);
     double getEvaluation(State state);
     bool writeTrainingData(GameWorld *world);
+    bool stateUpdate(GameWorld *world, *State state);
+    State stateInit(GameWorld *world);
 };
 
 

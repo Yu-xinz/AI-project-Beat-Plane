@@ -262,7 +262,6 @@ void Dawnbreaker::targetforalpha(){
         x_move=-1;
         if(dawnposx-4<0)
             x_move=1;
-    }
     if(rl==false){ //turn right
         x_move=1;
         if(dawnposx+4>(WINDOW_WIDTH-1))
@@ -736,6 +735,68 @@ bool Dawnbreaker::writeTrainingData(GameWorld *world)
     return true;
 }
 
+State Dawnbreaker::stateInit(GameWorld *world)
+{
+    ObjectList objects;
+    auto objects = world->get_obs();
+    for (auto each: objects)
+    {
+	if (
+            each->gettype() == 4
+	    || each -> gettype() == 5
+	    || each -> gettype() == 6
+	    || each -> gettype() == 7
+	    || each -> gettype() == 8
+	    || each -> gettype() == 9
+	    || each -> gettype() == 12
+	)
+        ObjectStatus status = {
+            each->gettype();
+	    each->GetX();
+	    each->GetY();
+	}
+	objects.push_back(status); 
+    }
+    int x_origin = 0;
+    int y_origin = 0;
+    double x_pos = GetX();
+    double y_pos = GetY();
+    double health = gethp();
+    int depth = 0;
+    State ret = {
+       x_origin, y_origin,
+       x_pos, y_pos,
+       health, depth,
+       objects
+    }
+    return ret;
+}
+
+bool Dawnbreaker::stateUpdate(GameWorld *world, State *state)
+{
+    ObjectList objects;
+    auto objects = state -> objects;
+    for (auto each: objects)
+    {
+	if (
+            each->type == 4
+	    || each->type  == 5
+	    || each->type  == 6
+	    || each->type  == 7
+	    || each->type  == 8
+	    || each->type  == 9
+	    || each->type  == 12
+	)
+	{
+            ObjectStatus status = {
+                each->type;
+	        each->x_pos;
+	        each->y_pos;
+	    }
+	    objects.push_back(status);
+	}
+    }
+}
 //Star
 Star::Star(int x, int y, double size, GameWorld* wrd):GameObject(IMGID_STAR,x,y,0,4,size,wrd){
     set_life(true);
