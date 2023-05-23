@@ -4,6 +4,9 @@
 #include <queue>
 #include <unordered_map>
 #include <random>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #ifndef M_PI
 #define M_PI 3.1415926
 #endif
@@ -14,6 +17,7 @@
 double reward = 0;
 double rate = 1;
 long long times = 0;
+const int ITERATION_TIMES = 50000;
 
 GameObject::GameObject(int imageID, int x, int y, int direction, int layer, double size, GameWorld* wrd):ObjectBase(imageID,x,y,direction,layer,size){
     world=wrd;
@@ -87,6 +91,25 @@ double GameObject::evaluatefunction(){
     return result;
 }
 
+void Dawnbreaker::saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cout << "Error opening file: " << filename << std::endl;
+        return;
+    }
+    file << "State,Action1,Action2,Action3,..." << std::endl;
+    for (const auto& pair : qTable) {
+        const Q_state& state = pair.first;
+        const std::vector<double>& qValues = pair.second;
+        file << state.self_x << "," << state.self_y << "," << state.density_plane[0] << "," << state.density_plane[1] << "," << state.density_plane[2] << "," << state.density_plane[3] << "," << state.density_bullet[0] << "," << state.density_bullet[1] << "," << state.density_bullet[2] << "," << state.density_bullet[3] << "," << state.nearest_bullet_direction << "," << state.nearest_plane_direction << "," << state.nearest_bullet_distance << "," << state.nearest_plane_distance;
+        for (double qValue : qValues) {
+            file << "," << qValue;
+        }
+
+        file << std::endl;
+    }
+    file.close();
+}
 
 //Dawnbreaker
 Dawnbreaker::Dawnbreaker(GameWorld* wrd):GameObject(IMGID_DAWNBREAKER,300,100,0,0,1.0,wrd){
@@ -97,20 +120,22 @@ Dawnbreaker::Dawnbreaker(GameWorld* wrd):GameObject(IMGID_DAWNBREAKER,300,100,0,
     set_life(true);
     settype(1);
     depth=10;
-    Q_table_init();
+    Q_table_init("Ni_Tou_Che.csv");
 }
 
 void Dawnbreaker::Update(){
     //Astar(get_world());
     reward = -1;
     times++;
+    if(times % 100000 == 0)
+        saveQTableToCSV(q_table, "Ni_Tou_Che.csv"), std::cout<<" wuhu" <<times<<std::endl;
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dis(0.0, 1.0);  // 均匀分布的实数生成器
 
     double random_number = dis(gen);
     int act;
-    rate = exp(-(double)(times)/100000);
+    rate = exp(-(double)(times)/ITERATION_TIMES);
     std::cout<<"Fuck  "<<rate<<std::endl;
     if(random_number <= rate)
         act = randInt(0, 8);
@@ -340,9 +365,12 @@ void Dawnbreaker::Astar(GameWorld *world){
     }
 }
 
-void Dawnbreaker::Q_table_init(){
+void Dawnbreaker::Q_table_init(const std::string& filename){
     //Init Q_table (so ugly)
-    for (int i = 0; i < ACCESSIBLE_X; i++)
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cout << "Error opening file: " << filename << std::endl;
+        for (int i = 0; i < ACCESSIBLE_X; i++)
         for (int j = 0; j < ACCESSIBLE_Y; j++)
             for(int d_1 = 0; d_1 < 3; d_1++)
                 for (int d_2 = 0; d_2 < 3; d_2++) 
@@ -374,6 +402,41 @@ void Dawnbreaker::Q_table_init(){
                                                             q_state.nearest_plane_distance = dis_2;
                                                             q_table[q_state] = std::vector<double>(NUM_ACTIONS, 0.0);
                                                         }
+    }
+    else {
+        std::string line;
+        std::getline(file, line);
+        while (std::getline(file, line)) {
+            std::stringstream ss(line);
+            std::string token;
+            std::vector<std::string> tokens;
+            while (std::getline(ss, token, ',')) {
+                tokens.push_back(token);
+            }
+            Q_state state;
+            state.self_x = std::stoi(tokens[0]);
+            state.self_y = std::stoi(tokens[1]);
+            state.density_plane[0] = std::stoi(tokens[2]);
+            state.density_plane[1] = std::stoi(tokens[3]);
+            state.density_plane[2] = std::stoi(tokens[4]);
+            state.density_plane[3] = std::stoi(tokens[5]);
+            state.density_bullet[0] = std::stoi(tokens[6]);
+            state.density_bullet[1] = std::stoi(tokens[7]);
+            state.density_bullet[2] = std::stoi(tokens[8]);
+            state.density_bullet[3] = std::stoi(tokens[9]);
+            state.nearest_bullet_direction = std::stoi(tokens[10]);
+            state.nearest_plane_direction = std::stoi(tokens[11]);
+            state.nearest_bullet_distance = std::stoi(tokens[12]);
+            state.nearest_plane_distance = std::stoi(tokens[13]);
+            std::vector<double> qValues;
+            for (size_t i = 14; i < tokens.size(); ++i) {
+                qValues.push_back(std::stod(tokens[i]));
+            }
+            q_table[state] = qValues;
+        }
+        std::cout << "Success opening file: " << filename << std::endl;
+        file.close();
+    }
     state_before.self_x = 1;
     state_before.self_y = 0;
     state_before.density_plane[0] = 0;

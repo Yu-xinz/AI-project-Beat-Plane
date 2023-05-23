@@ -95,8 +95,9 @@ public:
     virtual void Q_iteration(GameWorld *world)=0;
     virtual int Q_get_action(Q_state *ste)=0;
     virtual double Q_get_value(Q_state *ste)=0;
-    virtual void Q_table_init()=0;
+    virtual void Q_table_init(const std::string& filename)=0;
     virtual double evaluatefunction();
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename)=0;
     int gettype();
     void settype(int ty);
     GameWorld* get_world();
@@ -130,7 +131,8 @@ public:
     virtual void Q_iteration(GameWorld *world);
     virtual int Q_get_action(Q_state *ste);
     virtual double Q_get_value(Q_state *ste);
-    virtual void Q_table_init();
+    virtual void Q_table_init(const std::string& filename);
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename);
     /* state space:
             start                                                   0
             crashed by bullet                                       1
@@ -180,7 +182,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 };
 
 
@@ -199,7 +202,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 private:
     int damage;
 };
@@ -222,7 +226,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 private:
     int hp,energy;
     int damage,speed; //speed=2
@@ -246,7 +251,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 private:
     int hp,speed;
     int time,move_dir;
@@ -270,7 +276,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 private:
     int hp,energy;
     int damage,speed;
@@ -293,7 +300,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 private:
     int damage;
 };
@@ -313,7 +321,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 };
 
 
@@ -331,7 +340,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 };
 
 
@@ -349,7 +359,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 };
 
 
@@ -367,7 +378,8 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 };
 
 
@@ -385,6 +397,7 @@ public:
     virtual void Q_iteration(GameWorld *world){return;}
     virtual int Q_get_action(Q_state *ste){return -1;}
     virtual double Q_get_value(Q_state *ste){return 0.f;}
-    virtual void Q_table_init(){return;}
+    virtual void Q_table_init(const std::string& filename){return;}
+    virtual void saveQTableToCSV(std::unordered_map<Q_state, std::vector<double>, HashFunction>& qTable, const std::string& filename){return ;}
 };
 #endif // GAMEOBJECTS_H__
