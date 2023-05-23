@@ -85,11 +85,11 @@ void GameManager::Update() {
   switch (m_gameState) {
   case GameManager::GameState::TITLE:
     Prompt("DAWNBREAKER", "Press Enter to start");
-    //if (GetKey(KeyCode::ENTER)) {
+    if (GetKey(KeyCode::ENTER)) {
       m_world->Init();
       m_gameState = GameManager::GameState::ANIMATING;
       Display();
-    //}
+    }
     break;
   case GameManager::GameState::ANIMATING:
   {
@@ -104,17 +104,11 @@ void GameManager::Update() {
         Prompt("GAME OVER", (std::string("You reached level ") + std::to_string(m_world->GetLevel()) +
                              std::string(", score: ") + std::to_string(m_world->GetScore()) +
                              std::string(". Press Enter to quit.")).c_str());
-        std::cout << std::to_string(m_world->GetLevel()) << "," 
-                  << std::to_string(m_world->GetScore()) 
-                  << std::endl;
         m_gameState = GameManager::GameState::GAMEOVER;
         break;
       }
       else {
         Prompt("LEVEL FAILED", "Press Enter to retry level");
-                std::cout << std::to_string(m_world->GetLevel()) << "," 
-                  << std::to_string(m_world->GetScore()) 
-                  << std::endl;
         m_gameState = GameManager::GameState::PROMPTING;
         break;
       }
@@ -122,25 +116,22 @@ void GameManager::Update() {
       m_world->CleanUp();
       m_world->SetLevel(m_world->GetLevel() + 1);
       Prompt("LEVEL CLEAR!", "Press Enter to continue");
-              std::cout << std::to_string(m_world->GetLevel()) << "," 
-                  << std::to_string(m_world->GetScore()) 
-                  << std::endl;
       m_gameState = GameManager::GameState::PROMPTING;
       break;
     }
     break;
   }
   case GameManager::GameState::PROMPTING:
-    //if (GetKey(KeyCode::ENTER)) {
+    if (GetKey(KeyCode::ENTER)) {
       m_world->Init();
       m_gameState = GameManager::GameState::ANIMATING;
       Display();
-    //} 
+    } 
     break;
   case GameManager::GameState::GAMEOVER:
-    //if (GetKey(KeyCode::ENTER)) {
+    if (GetKey(KeyCode::ENTER)) {
       exit(EXIT_SUCCESS);
-    //}
+    }
     break;
   default:
     break;
